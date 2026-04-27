@@ -62,7 +62,12 @@ modules:
     branch: main
 
   # ========== Tools ==========
-  # 待添加...
+  - name: skill-converter
+    repo: "local"
+    category: tools
+    tags: [converter, skill, cross-platform, claude, codex, opencode, cursor]
+    description: "跨平台 Skill 格式转换工具 - 支持 Claude/Codex/OpenCode/Cursor 等平台互转"
+    local_path: "tools/skill_converter.py"
 
   # ========== CLIs ==========
   - name: cli-hub

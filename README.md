@@ -10,6 +10,7 @@ agent-wushu/
 │   ├── anthropics-pptx/   # Anthropic 官方 PPTX skill
 │   └── nanobanana-ppt/    # NanoBanana PPT 图片/视频生成
 ├── tools/           # Agent Tools & Utilities
+│   └── skill_converter.py  # 跨平台 Skill 格式转换
 ├── clis/            # CLI Tools for Agent Interaction
 ├── frameworks/      # Agent Frameworks & Libraries
 ├── plugins/         # Agent Platform Plugins
@@ -167,6 +168,42 @@ python generate_ppt_video.py \
 |------|------|----------|
 | 渐变毛玻璃卡片 | `styles/gradient-glass.md` | 科技产品、商务演示、数据报告 |
 | 矢量插画 | `styles/vector-illustration.md` | 教育培训、创意提案、温暖品牌故事 |
+
+---
+
+## 已集成 Tools
+
+### Skill Converter
+
+**路径**: [`tools/skill_converter.py`](./tools/skill_converter.py)
+
+**功能描述**:
+跨平台 Skill 格式转换工具，支持将不同 Agent 平台的 skill 目录和格式进行互相转换。
+
+| 支持平台 | 标识符 | 说明 |
+|----------|--------|------|
+| Claude Code | `claude` | Anthropic 官方 Claude Code |
+| Codex | `codex` | OpenAI Codex |
+| OpenCode | `opencode` | OpenCode |
+| OpenClaw | `openclaw` | OpenClaw |
+| Cursor | `cursor` | Cursor IDE |
+
+**使用示例**:
+```bash
+# 列出支持的平台
+python tools/skill_converter.py list-platforms
+
+# 转换单个 skill 文件到 Codex 格式
+python tools/skill_converter.py convert skills/pptx/SKILL.md codex
+
+# 转换整个目录
+python tools/skill_converter.py convert skills/ opencode -o output/
+
+# 批量转换到多个平台
+python tools/skill_converter.py batch skills/ claude codex opencode
+```
+
+**详细文档**: [docs/SKILL_CONVERTER.md](./docs/SKILL_CONVERTER.md)
 
 ---
 
