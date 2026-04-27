@@ -45,6 +45,22 @@ modules:
     sparse_checkout:
       - "README.md"
 
+  - name: anthropics-pptx-skill
+    repo: "https://github.com/anthropics/skills"
+    category: skills
+    tags: [pptx, presentation, claude, anthropic]
+    description: "Anthropic 官方 PPTX skill - 创建和编辑演示文稿"
+    branch: main
+    sparse_checkout:
+      - "skills/pptx/"
+
+  - name: nanobanana-ppt-skill
+    repo: "https://github.com/op7418/NanoBanana-PPT-Skills"
+    category: skills
+    tags: [pptx, presentation, video, generation, kling]
+    description: "NanoBanana PPT Skills - AI驱动的PPT图片和视频生成"
+    branch: main
+
   # ========== Tools ==========
   # 待添加...
 

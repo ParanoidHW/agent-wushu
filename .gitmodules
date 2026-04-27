@@ -2,3 +2,10 @@
 	path = plugins/opencode-commands
 	url = https://github.com/HKUDS/CLI-Anything.git
 	sparse-checkout-dir = opencode-commands
+[submodule "skills/anthropics-pptx"]
+	path = skills/anthropics-pptx
+	url = https://github.com/anthropics/skills.git
+	sparse-checkout-dir = skills/pptx
+[submodule "skills/nanobanana-ppt"]
+	path = skills/nanobanana-ppt
+	url = https://github.com/op7418/NanoBanana-PPT-Skills.git
