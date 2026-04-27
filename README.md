@@ -79,11 +79,43 @@ python wushu.py status
 **Plugins:**
 - [OpenCode Commands](./plugins/opencode-commands/) - CLI 工具集
 
+## 部署到各平台
+
+克隆 skill 后，需要部署到对应平台的正确目录才能生效。
+
+👉 **详细部署指南**: [Skill 部署指南](./docs/SKILL_DEPLOYMENT.md)
+
+### 快速部署
+
+```bash
+# Claude Code（个人 skill）
+cp -r skills/anthropics-pptx/skills/pptx ~/.claude/skills/pptx
+
+# 转换后部署到 OpenCode
+python tools/skill_converter.py convert \
+  skills/anthropics-pptx/skills/pptx/SKILL.md \
+  opencode \
+  -o .opencode/skills/pptx/SKILL.md
+
+# 批量转换到多个平台
+python tools/skill_converter.py batch skills/ claude opencode cursor -o converted/
+```
+
+### 各平台安装位置
+
+| 平台 | 位置 | 说明 |
+|------|------|------|
+| Claude Code | `~/.claude/skills/` | 个人 skill，全局可用 |
+| OpenCode | `.opencode/skills/` | 项目 skill |
+| Codex | `.codex/skills/` | 项目 skill |
+| Cursor | `.cursor/skills/` | 项目 skill |
+
 ## 文档索引
 
 | 文档 | 说明 |
 |------|------|
 | [已集成模块](./docs/INTEGRATED_MODULES.md) | Skills/Tools/Plugins 详细说明 |
+| [部署指南](./docs/SKILL_DEPLOYMENT.md) | 部署 skill 到各平台项目目录 |
 | [架构设计](./docs/ARCHITECTURE.md) | 仓库架构和设计原则 |
 | [配置规范](./docs/REGISTRY_SPEC.md) | registry.yaml 配置说明 |
 | [管理脚本](./docs/WUSHU_CLI.md) | wushu.py 使用指南 |
