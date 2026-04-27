@@ -198,7 +198,33 @@ converted/
 
 ## 注意事项
 
-1. **格式兼容性**：某些平台可能有额外的要求字段，转换后需手动检查
+### 源平台与目标平台相同
+
+当检测到源 skill 已经是目标平台格式时，工具会自动跳过转换并给出警告：
+
+```bash
+# Claude skill 转 Claude 格式（自动跳过）
+python tools/skill_converter.py convert skills/claude-skill/SKILL.md claude
+# 输出: ⚠️ Skip: ... (already in claude format, use --force to override)
+
+# 强制转换（即使格式相同）
+python tools/skill_converter.py convert skills/claude-skill/SKILL.md claude --force
+```
+
+### 平台检测机制
+
+工具通过以下方式检测源平台：
+
+1. **标题检测**（最准确）- 检查标题是否匹配平台特定格式
+   - Claude: `# <name> Skill`
+   - Codex/OpenCode/OpenClaw: `# <name> for <Platform>`
+   - Cursor: `# <name>`（无后缀）
+
+2. **Frontmatter 检测** - 检查 `license` 字段（Claude 特有）
+
+3. **描述检测** - 检查描述中是否包含平台名称引用
+
+### 格式兼容性：某些平台可能有额外的要求字段，转换后需手动检查
 2. **内容一致性**：核心 skill 内容保持不变，仅调整格式
 3. **许可证处理**：Claude 格式包含 `license` 字段，其他平台可能不需要
 4. **自定义 skill**：对于高度定制化的 skill，可能需要手动调整
