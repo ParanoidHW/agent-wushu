@@ -9,3 +9,6 @@
 [submodule "skills/nanobanana-ppt"]
 	path = skills/nanobanana-ppt
 	url = https://github.com/op7418/NanoBanana-PPT-Skills.git
+[submodule "skills/excalidraw-diagram"]
+	path = skills/excalidraw-diagram
+	url = https://github.com/coleam00/excalidraw-diagram-skill.git

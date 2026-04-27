@@ -61,6 +61,12 @@ modules:
     description: "NanoBanana PPT Skills - AI驱动的PPT图片和视频生成"
     branch: main
 
+  - name: excalidraw-diagram-skill
+    repo: "https://github.com/coleam00/excalidraw-diagram-skill"
+    category: skills
+    tags: [diagram, excalidraw, visualization, architecture]
+    description: "Excalidraw Diagram Skill - 生成论证性图表的 Agent skill"
+
   # ========== Tools ==========
   - name: skill-converter
     repo: "local"

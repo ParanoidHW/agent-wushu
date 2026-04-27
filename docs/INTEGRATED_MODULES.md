@@ -123,6 +123,71 @@ python generate_ppt_video.py \
 
 ---
 
+### 3. Excalidraw Diagram Skill
+
+**路径**: [`skills/excalidraw-diagram/`](../skills/excalidraw-diagram/)
+
+**源仓库**: [coleam00/excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill)
+
+**标签**: `diagram`, `excalidraw`, `visualization`, `architecture`
+
+**功能描述**:
+生成"论证性图表"的 Agent skill，让图表的视觉结构反映概念含义，而非仅仅是信息的展示。
+
+| 功能 | 说明 |
+|------|------|
+| 论证性图表设计 | 形状反映概念（扇形=一对多，时间线=序列） |
+| Evidence Artifacts | 代码片段、JSON 示例、真实数据展示 |
+| 视觉验证 | Playwright 渲染 PNG，验证布局正确性 |
+| 多缩放架构 | 概览流 + 区域边界 + 详情内容 |
+| 可定制配色 | 单文件配置品牌颜色 (`color-palette.md`) |
+
+**核心理念**:
+- **同构测试**: 移除所有文字，结构本身能否传达概念？
+- **教育测试**: 图表能教会具体内容，而非仅标记方框？
+
+**视觉模式库**:
+
+| 概念 | 视觉模式 |
+|------|----------|
+| 一对多输出 | Fan-out（放射状箭头） |
+| 多对一聚合 | Convergence（漏斗） |
+| 层级嵌套 | Tree（线+自由文本） |
+| 步骤序列 | Timeline（线+点+标签） |
+| 循环迭代 | Spiral/Cycle |
+| 抽象状态 | Cloud（重叠椭圆） |
+| 输入→输出转换 | Assembly Line |
+
+**依赖设置**:
+```bash
+cd skills/excalidraw-diagram/references
+uv sync
+uv run playwright install chromium
+```
+
+**使用示例**:
+```bash
+# 生成后渲染验证（必需步骤）
+cd skills/excalidraw-diagram/references
+uv run python render_excalidraw.py diagram.excalidraw
+
+# 查看渲染结果
+# 使用 Read 工具查看生成的 PNG
+```
+
+**文件结构**:
+| 文件 | 功能 |
+|------|------|
+| `SKILL.md` | 设计方法论 + 工作流程 |
+| `references/color-palette.md` | 品牌配色（可编辑） |
+| `references/element-templates.md` | JSON 元素模板 |
+| `references/json-schema.md` | Excalidraw 格式参考 |
+| `references/render_excalidraw.py` | 渲染脚本 |
+
+**许可证**: MIT
+
+---
+
 ## Tools
 
 ### Skill Converter
@@ -198,6 +263,7 @@ CLI-Anything 项目为 OpenCode 提供的命令集，包含大量 CLI 工具的 
 |------|------|------|--------|
 | anthropics-pptx-skill | skills | pptx, claude | [anthropics/skills](https://github.com/anthropics/skills) |
 | nanobanana-ppt-skill | skills | pptx, video, kling | [op7418/NanoBanana-PPT-Skills](https://github.com/op7418/NanoBanana-PPT-Skills) |
+| excalidraw-diagram-skill | skills | diagram, visualization | [coleam00/excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill) |
 | skill-converter | tools | converter, cross-platform | 本地开发 |
 | opencode-commands | plugins | opencode | [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) |
 
@@ -210,4 +276,5 @@ CLI-Anything 项目为 OpenCode 提供的命令集，包含大量 CLI 工具的 
 | 本仓库 | MIT |
 | anthropics-pptx | Proprietary (参见 LICENSE.txt) |
 | nanobanana-ppt | MIT |
+| excalidraw-diagram | MIT |
 | opencode-commands | MIT (CLI-Anything) |
