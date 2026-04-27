@@ -7,14 +7,11 @@ Agent 工具/Skills 仓库，集成 GitHub 上开源的 agent 工具、skill、C
 ```
 agent-wushu/
 ├── skills/          # AI Agent Skills (SKILL.md 等)
-│   ├── anthropics-pptx/   # Anthropic 官方 PPTX skill
-│   └── nanobanana-ppt/    # NanoBanana PPT 图片/视频生成
 ├── tools/           # Agent Tools & Utilities
-│   └── skill_converter.py  # 跨平台 Skill 格式转换
 ├── clis/            # CLI Tools for Agent Interaction
 ├── frameworks/      # Agent Frameworks & Libraries
 ├── plugins/         # Agent Platform Plugins
-│   └── opencode-commands/  # OpenCode 命令集
+├── docs/            # 文档目录
 ├── registry.yaml    # 子模块注册表
 ├── wushu.py         # 管理脚本
 └── README.md
@@ -58,167 +55,40 @@ python wushu.py update
 python wushu.py status
 ```
 
-## 已集成 Skills
+## 已集成模块
 
-### PPTX 相关 Skills
+当前已集成 **2 Skills + 1 Tool + 1 Plugin**。
 
-#### 1. Anthropic PPTX Skill
+👉 **详细说明请查看**: [已集成模块文档](./docs/INTEGRATED_MODULES.md)
 
-**路径**: [`skills/anthropics-pptx/skills/pptx/`](./skills/anthropics-pptx/skills/pptx/)
+| 类别 | 数量 | 链接 |
+|------|------|------|
+| Skills | 2 | [查看详情](./docs/INTEGRATED_MODULES.md#skills) |
+| Tools | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#tools) |
+| Plugins | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#plugins) |
 
-**源仓库**: [anthropics/skills](https://github.com/anthropics/skills/tree/main/skills/pptx)
+### 快速概览
 
-**功能描述**:
-Anthropic 官方发布的 PPTX 处理 skill，提供完整的演示文稿读取、编辑和创建能力。
+**Skills:**
+- [Anthropic PPTX Skill](./skills/anthropics-pptx/skills/pptx/) - PPTX 处理
+- [NanoBanana PPT Skills](./skills/nanobanana-ppt/) - AI PPT 生成
 
-| 功能 | 说明 |
+**Tools:**
+- [Skill Converter](./tools/skill_converter.py) - 跨平台格式转换
+
+**Plugins:**
+- [OpenCode Commands](./plugins/opencode-commands/) - CLI 工具集
+
+## 文档索引
+
+| 文档 | 说明 |
 |------|------|
-| 读取/解析 | 使用 `markitdown` 提取 PPTX 文本内容 |
-| 缩略图生成 | `thumbnail.py` 生成可视化概览 |
-| XML 解析 | `unpack.py` 解包原始 XML 结构 |
-| 模板编辑 | 基于 template 的修改流程 |
-| 从零创建 | 使用 `pptxgenjs` 创建全新演示文稿 |
-
-**设计指导**:
-- 10+ 专业配色方案（Midnight Executive、Forest & Moss、Coral Energy 等）
-- 字体配对建议（Georgia + Calibri、Arial Black + Arial 等）
-- 布局模式（双栏、图标+文本、网格、半出血图片）
-- QA 流程（内容检查 + 视觉检查）
-
-**依赖**:
-```bash
-pip install "markitdown[pptx]" Pillow
-npm install -g pptxgenjs
-# LibreOffice (soffice) + Poppler (pdftoppm) 用于 PDF 转换
-```
-
-**使用示例**:
-```bash
-# 读取 PPTX 内容
-python -m markitdown presentation.pptx
-
-# 生成缩略图
-python scripts/thumbnail.py presentation.pptx
-
-# 解包查看 XML
-python scripts/office/unpack.py presentation.pptx unpacked/
-```
-
----
-
-#### 2. NanoBanana PPT Skills
-
-**路径**: [`skills/nanobanana-ppt/`](./skills/nanobanana-ppt/)
-
-**源仓库**: [op7418/NanoBanana-PPT-Skills](https://github.com/op7418/NanoBanana-PPT-Skills)
-
-**功能描述**:
-AI 驱动的 PPT 图片和视频生成工具，支持智能转场和交互式播放。
-
-| 功能 | 说明 |
-|------|------|
-| 智能文档分析 | 自动提取核心要点，规划 PPT 结构 |
-| 多风格支持 | 渐变毛玻璃、矢量插画两种专业风格 |
-| 高质量图片 | Gemini API 生成 16:9 高清 PPT (2K/4K) |
-| AI 转场视频 | 可灵 AI 生成页面过渡动画 |
-| 交互式播放器 | HTML5 视频+图片混合播放器 |
-| 完整视频导出 | FFmpeg 合成带转场的完整视频 |
-
-**核心脚本**:
-| 文件 | 功能 |
-|------|------|
-| `generate_ppt.py` | PPT 图片生成主脚本 |
-| `generate_ppt_video.py` | 视频生成主脚本 |
-| `kling_api.py` | 可灵 AI API 封装 |
-| `video_composer.py` | FFmpeg 视频合成 |
-
-**环境变量**:
-```bash
-# 必需
-GEMINI_API_KEY=your_gemini_api_key
-
-# 可选（视频功能）
-KLING_ACCESS_KEY=your_kling_access_key
-KLING_SECRET_KEY=your_kling_secret_key
-```
-
-**依赖**:
-```bash
-pip install google-genai pillow python-dotenv
-# FFmpeg 用于视频合成
-```
-
-**使用示例**:
-```bash
-# 生成 PPT 图片
-python generate_ppt.py \
-  --plan slides_plan.json \
-  --style styles/gradient-glass.md \
-  --resolution 2K
-
-# 生成转场视频
-python generate_ppt_video.py \
-  --slides-dir outputs/images \
-  --prompts-file outputs/transition_prompts.json
-```
-
-**内置风格**:
-
-| 风格 | 文件 | 适用场景 |
-|------|------|----------|
-| 渐变毛玻璃卡片 | `styles/gradient-glass.md` | 科技产品、商务演示、数据报告 |
-| 矢量插画 | `styles/vector-illustration.md` | 教育培训、创意提案、温暖品牌故事 |
-
----
-
-## 已集成 Tools
-
-### Skill Converter
-
-**路径**: [`tools/skill_converter.py`](./tools/skill_converter.py)
-
-**功能描述**:
-跨平台 Skill 格式转换工具，支持将不同 Agent 平台的 skill 目录和格式进行互相转换。
-
-| 支持平台 | 标识符 | 说明 |
-|----------|--------|------|
-| Claude Code | `claude` | Anthropic 官方 Claude Code |
-| Codex | `codex` | OpenAI Codex |
-| OpenCode | `opencode` | OpenCode |
-| OpenClaw | `openclaw` | OpenClaw |
-| Cursor | `cursor` | Cursor IDE |
-
-**使用示例**:
-```bash
-# 列出支持的平台
-python tools/skill_converter.py list-platforms
-
-# 转换单个 skill 文件到 Codex 格式
-python tools/skill_converter.py convert skills/pptx/SKILL.md codex
-
-# 转换整个目录
-python tools/skill_converter.py convert skills/ opencode -o output/
-
-# 批量转换到多个平台
-python tools/skill_converter.py batch skills/ claude codex opencode
-```
-
-**详细文档**: [docs/SKILL_CONVERTER.md](./docs/SKILL_CONVERTER.md)
-
----
-
-## 已集成 Plugins
-
-### OpenCode Commands
-
-**路径**: [`plugins/opencode-commands/`](./plugins/opencode-commands/)
-
-**源仓库**: [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything)
-
-**功能描述**:
-CLI-Anything 项目为 OpenCode 提供的命令集，扩展 Agent 的 CLI 交互能力。
-
----
+| [已集成模块](./docs/INTEGRATED_MODULES.md) | Skills/Tools/Plugins 详细说明 |
+| [架构设计](./docs/ARCHITECTURE.md) | 仓库架构和设计原则 |
+| [配置规范](./docs/REGISTRY_SPEC.md) | registry.yaml 配置说明 |
+| [管理脚本](./docs/WUSHU_CLI.md) | wushu.py 使用指南 |
+| [Skill Converter](./docs/SKILL_CONVERTER.md) | 格式转换工具文档 |
+| [Agent 参考](./docs/AGENT_REFERENCE.md) | Agent 快速参考指南 |
 
 ## 添加新模块
 
@@ -234,22 +104,11 @@ modules:
     branch: main
     sparse_checkout:  # 可选，只克隆指定路径
       - "path/to/file/"
-      - "another/path/"
 ```
 
-## 部分克隆功能
-
-使用 `sparse_checkout` 字段指定要克隆的路径，避免克隆整个仓库：
-
-```yaml
-# 示例：只克隆 anthropics/skills 仓库的 pptx 目录
-sparse_checkout:
-  - "skills/pptx/"
-```
+详细配置说明请查看 [配置规范文档](./docs/REGISTRY_SPEC.md)。
 
 ## 许可证
 
 - 本仓库: MIT
-- 子模块遵循各自原仓库的许可证
-  - anthropics-pptx: Proprietary (参见 LICENSE.txt)
-  - nanobanana-ppt: MIT
+- 子模块遵循各自原仓库的许可证（详见 [已集成模块文档](./docs/INTEGRATED_MODULES.md#许可证汇总)）
