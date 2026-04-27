@@ -1,0 +1,106 @@
+# Agent Wushu Registry
+# 定义所有子模块的元数据，支持按类别/标签筛选克隆
+
+categories:
+  skills:
+    description: "AI Agent Skills (SKILL.md 等)"
+    path: "skills"
+  
+  tools:
+    description: "Agent Tools & Utilities"
+    path: "tools"
+  
+  clis:
+    description: "CLI Tools for Agent Interaction"
+    path: "clis"
+  
+  frameworks:
+    description: "Agent Frameworks & Libraries"
+    path: "frameworks"
+  
+  plugins:
+    description: "Agent Platform Plugins"
+    path: "plugins"
+
+# 子模块注册表
+modules:
+  # ========== Skills ==========
+  - name: cli-anything-skill
+    repo: "https://github.com/HKUDS/CLI-Anything"
+    category: skills
+    tags: [cli, generation, automation]
+    description: "CLI-Anything: Making ALL Software Agent-Native"
+    branch: main
+    sparse_checkout:
+      - "openclaw-skill/"
+      - "codex-skill/"
+      - "skills/"
+  
+  - name: awesome-agent-skills
+    repo: "https://github.com/sindresorhus/awesome"
+    category: skills
+    tags: [awesome, curated]
+    description: "Awesome lists curated collection"
+    branch: main
+    sparse_checkout:
+      - "README.md"
+
+  # ========== Tools ==========
+  # 待添加...
+
+  # ========== CLIs ==========
+  - name: cli-hub
+    repo: "https://github.com/HKUDS/CLI-Anything"
+    category: clis
+    tags: [cli, hub, registry]
+    description: "CLI-Hub package manager for CLI-Anything"
+    branch: main
+    sparse_checkout:
+      - "cli-hub/"
+
+  # ========== Frameworks ==========
+  # 待添加...
+
+  # ========== Plugins ==========
+  - name: claude-plugin
+    repo: "https://github.com/HKUDS/CLI-Anything"
+    category: plugins
+    tags: [claude, plugin]
+    description: "CLI-Anything plugin for Claude Code"
+    branch: main
+    sparse_checkout:
+      - ".claude-plugin/"
+      - "cli-anything-plugin/"
+
+  - name: opencode-commands
+    repo: "https://github.com/HKUDS/CLI-Anything"
+    category: plugins
+    tags: [opencode, commands]
+    description: "CLI-Anything commands for OpenCode"
+    branch: main
+    sparse_checkout:
+      - "opencode-commands/"
+
+  - name: pi-extension
+    repo: "https://github.com/HKUDS/CLI-Anything"
+    category: plugins
+    tags: [pi, extension]
+    description: "CLI-Anything extension for Pi Coding Agent"
+    branch: main
+    sparse_checkout:
+      - ".pi-extension/"
+
+  - name: qoder-plugin
+    repo: "https://github.com/HKUDS/CLI-Anything"
+    category: plugins
+    tags: [qoder, plugin]
+    description: "CLI-Anything plugin for Qodercli"
+    branch: main
+    sparse_checkout:
+      - "qoder-plugin/"
+
+# 标签分组（用于快速筛选）
+tag_groups:
+  coding: [cli, generation, automation]
+  platform: [claude, opencode, pi, qoder, codex]
+  reference: [awesome, curated]

@@ -1,0 +1,4 @@
+[submodule "plugins/opencode-commands"]
+	path = plugins/opencode-commands
+	url = https://github.com/HKUDS/CLI-Anything.git
+	sparse-checkout-dir = opencode-commands
