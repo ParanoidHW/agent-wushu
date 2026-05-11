@@ -18,6 +18,7 @@ modules:
   - name: module-name
     repo: "https://github.com/user/repo"
     category: skills
+    target_path: "skills/custom-directory"
     tags: [tag1, tag2]
     description: "简短描述"
     branch: main
@@ -53,6 +54,8 @@ tag_groups:
 | `tags` | ✅ | 标签数组 | `[pptx, claude, anthropic]` |
 | `description` | ✅ | 简短描述 | "Anthropic 官方 PPTX skill" |
 | `branch` | ❌ | 分支名，默认 `main` | `main` |
+| `target_path` | ❌ | 克隆到仓库内的实际路径；省略时使用 `<category path>/<name>` | `skills/anthropics-pptx` |
+| `local_path` | ❌ | 本地模块文件或目录路径；用于 `repo: local` 的模块 | `tools/skill_converter.py` |
 | `sparse_checkout` | ❌ | 部分克隆路径 | `["skills/pptx/"]` |
 
 ### tag_groups
@@ -140,6 +143,7 @@ sparse_checkout:
 - name: complete-example
   repo: "https://github.com/org/complex-repo"
   category: skills
+  target_path: "skills/complete-example"
   tags: [ai, generation, automation, claude]
   description: "完整配置示例模块"
   branch: develop
@@ -147,6 +151,20 @@ sparse_checkout:
     - "skills/main/"
     - "docs/"
     - "scripts/core/"
+```
+
+### 本地模块
+
+仓库内维护的工具可以使用 `repo: local` 和 `local_path` 注册。`wushu.py clone`
+会直接报告本地路径，不会执行 Git clone。
+
+```yaml
+- name: skill-converter
+  repo: "local"
+  category: tools
+  local_path: "tools/skill_converter.py"
+  tags: [converter, skill]
+  description: "跨平台 Skill 格式转换工具"
 ```
 
 ---

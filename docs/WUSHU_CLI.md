@@ -75,6 +75,8 @@ python wushu.py clone module-name --full
 |------|------|
 | 有 `sparse_checkout` | 只克隆指定路径 |
 | 无 `sparse_checkout` | 克隆整个仓库 |
+| 有 `target_path` | 克隆到指定路径 |
+| `repo: local` | 只检查 `local_path`，不执行 Git clone |
 | 默认 | 浅克隆 (`--depth=1`) |
 | `--full` | 完整克隆（包含历史） |
 
@@ -133,6 +135,8 @@ opencode-commands         MODIFIED        plugins/opencode-commands
 | `OK` | 已克隆，无修改 |
 | `NOT_CLONED` | 未克隆 |
 | `MODIFIED` | 已克隆，有本地修改 |
+| `MISSING` | 本地模块路径不存在 |
+| `NOT_GIT` | 路径存在，但不是 Git checkout |
 
 ## 工作原理
 
@@ -141,12 +145,13 @@ opencode-commands         MODIFIED        plugins/opencode-commands
 ```
 1. 加载 registry.yaml
 2. 解析命令行参数
-3. 筛选目标模块
-4. 执行 Git 操作：
+3. 解析模块路径：优先使用 `target_path` / `local_path`，否则使用 `<category path>/<name>`
+4. 筛选目标模块
+5. 执行 Git 操作：
    - clone: git init + sparse-checkout + fetch + checkout
    - update: git pull
    - status: git status --porcelain
-5. 输出结果
+6. 输出结果
 ```
 
 ### Sparse Checkout 实现

@@ -35,6 +35,40 @@ def get_category_path(category: str, registry: dict) -> Path:
     return REPO_ROOT / categories[category]["path"]
 
 
+def is_local_module(module: dict) -> bool:
+    return module.get("repo") == "local" or bool(module.get("local_path"))
+
+
+def get_module_path(module: dict, registry: dict) -> Path:
+    configured_path = module.get("target_path") or module.get("local_path")
+    if configured_path:
+        return REPO_ROOT / configured_path
+
+    category = module.get("category")
+    name = module.get("name")
+    return get_category_path(category, registry) / name
+
+
+def format_repo_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO_ROOT))
+    except ValueError:
+        return str(path)
+
+
+def is_git_checkout(path: Path) -> bool:
+    if not path.is_dir():
+        return False
+
+    result = subprocess.run(
+        ["git", "rev-parse", "--is-inside-work-tree"],
+        cwd=path,
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0 and result.stdout.strip() == "true"
+
+
 def list_modules(registry: dict, category: Optional[str] = None, tags: Optional[list] = None):
     modules = registry.get("modules", [])
     categories = registry.get("categories", {})
@@ -64,44 +98,56 @@ def clone_module(module: dict, registry: dict, shallow: bool = True):
     repo = module.get("repo")
     branch = module.get("branch", "main")
     sparse_paths = module.get("sparse_checkout", [])
-    category = module.get("category")
-    
-    target_dir = get_category_path(category, registry) / name
-    
-    if target_dir.exists():
-        print(f"[SKIP] {name} already exists at {target_dir}")
+
+    target_path = get_module_path(module, registry)
+
+    if is_local_module(module):
+        if target_path.exists():
+            print(f"[LOCAL] {name} available at {format_repo_path(target_path)}")
+        else:
+            print(f"[MISSING] {name} expected at {format_repo_path(target_path)}")
         return
     
-    print(f"[CLONE] {name} -> {target_dir}")
+    if target_path.exists():
+        print(f"[SKIP] {name} already exists at {format_repo_path(target_path)}")
+        return
     
-    target_dir.mkdir(parents=True, exist_ok=True)
+    print(f"[CLONE] {name} -> {format_repo_path(target_path)}")
+    target_path.parent.mkdir(parents=True, exist_ok=True)
     
     if sparse_paths:
-        clone_sparse(repo, target_dir, branch, sparse_paths, shallow)
+        target_path.mkdir(parents=True, exist_ok=True)
+        clone_sparse(repo, target_path, branch, sparse_paths, shallow)
     else:
-        clone_full(repo, target_dir, branch, shallow)
+        clone_full(repo, target_path, branch, shallow)
 
 
 def clone_sparse(repo: str, target: Path, branch: str, paths: list, shallow: bool):
+    has_file_patterns = any(not path.endswith("/") for path in paths)
+    sparse_mode = "--no-cone" if has_file_patterns else "--cone"
+
     init_cmd = ["git", "init"]
     subprocess.run(init_cmd, cwd=target, check=True)
     
-    sparse_cmd = ["git", "sparse-checkout", "init", "--cone"]
+    sparse_cmd = ["git", "sparse-checkout", "init", sparse_mode]
     subprocess.run(sparse_cmd, cwd=target, check=True)
     
     remote_cmd = ["git", "remote", "add", "origin", repo]
     subprocess.run(remote_cmd, cwd=target, check=True)
     
-    set_cmd = ["git", "sparse-checkout", "set"] + paths
+    set_cmd = ["git", "sparse-checkout", "set", sparse_mode] + paths
     subprocess.run(set_cmd, cwd=target, check=True)
     
-    fetch_cmd = ["git", "fetch", "--depth=1", "origin", branch]
+    fetch_ref = f"{branch}:refs/remotes/origin/{branch}"
+    fetch_cmd = ["git", "fetch", "--depth=1", "origin", fetch_ref]
     if not shallow:
-        fetch_cmd = ["git", "fetch", "origin", branch]
+        fetch_cmd = ["git", "fetch", "origin", fetch_ref]
     subprocess.run(fetch_cmd, cwd=target, check=True)
     
-    checkout_cmd = ["git", "checkout", branch]
+    checkout_cmd = ["git", "checkout", "-B", branch, f"origin/{branch}"]
     subprocess.run(checkout_cmd, cwd=target, check=True)
+    upstream_cmd = ["git", "branch", "--set-upstream-to", f"origin/{branch}", branch]
+    subprocess.run(upstream_cmd, cwd=target, check=True)
     
     print(f"  Sparse checkout: {paths}")
 
@@ -138,7 +184,6 @@ def clone_by_filter(registry: dict, names: Optional[list] = None,
 
 def update_modules(registry: dict, names: Optional[list] = None):
     modules = registry.get("modules", [])
-    categories = registry.get("categories", {})
     
     to_update = modules
     if names:
@@ -146,42 +191,56 @@ def update_modules(registry: dict, names: Optional[list] = None):
     
     for m in to_update:
         name = m.get("name")
-        category = m.get("category")
-        target_dir = get_category_path(category, registry) / name
+        target_path = get_module_path(m, registry)
+
+        if is_local_module(m):
+            print(f"[SKIP] {name} is local at {format_repo_path(target_path)}")
+            continue
         
-        if not target_dir.exists():
+        if not target_path.exists():
             print(f"[SKIP] {name} not cloned")
+            continue
+
+        if not is_git_checkout(target_path):
+            print(f"[SKIP] {name} is not a git checkout: {format_repo_path(target_path)}")
             continue
         
         print(f"[UPDATE] {name}")
-        subprocess.run(["git", "pull"], cwd=target_dir)
+        subprocess.run(["git", "pull"], cwd=target_path)
 
 
 def status_modules(registry: dict):
     modules = registry.get("modules", [])
-    categories = registry.get("categories", {})
     
     print(f"\n{'Name':<25} {'Status':<15} {'Path'}")
     print("-" * 60)
     
     for m in modules:
         name = m.get("name")
-        category = m.get("category")
-        target_dir = get_category_path(category, registry) / name
+        target_path = get_module_path(m, registry)
         
-        if not target_dir.exists():
-            status = "NOT_CLONED"
+        if not target_path.exists():
+            status = "MISSING" if is_local_module(m) else "NOT_CLONED"
+        elif is_local_module(m):
+            rel_path = format_repo_path(target_path)
+            result = subprocess.run(
+                ["git", "status", "--porcelain", "--", rel_path],
+                cwd=REPO_ROOT, capture_output=True, text=True
+            )
+            status = "MODIFIED" if result.stdout else "OK"
+        elif not is_git_checkout(target_path):
+            status = "NOT_GIT"
         else:
             result = subprocess.run(
                 ["git", "status", "--porcelain"],
-                cwd=target_dir, capture_output=True, text=True
+                cwd=target_path, capture_output=True, text=True
             )
             if result.stdout:
                 status = "MODIFIED"
             else:
                 status = "OK"
         
-        rel_path = str(target_dir.relative_to(REPO_ROOT))
+        rel_path = format_repo_path(target_path)
         print(f"{name:<25} {status:<15} {rel_path}")
 
 

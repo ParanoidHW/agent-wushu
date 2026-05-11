@@ -48,6 +48,7 @@ modules:
   - name: anthropics-pptx-skill
     repo: "https://github.com/anthropics/skills"
     category: skills
+    target_path: "skills/anthropics-pptx"
     tags: [pptx, presentation, claude, anthropic]
     description: "Anthropic 官方 PPTX skill - 创建和编辑演示文稿"
     branch: main
@@ -57,6 +58,7 @@ modules:
   - name: nanobanana-ppt-skill
     repo: "https://github.com/op7418/NanoBanana-PPT-Skills"
     category: skills
+    target_path: "skills/nanobanana-ppt"
     tags: [pptx, presentation, video, generation, kling]
     description: "NanoBanana PPT Skills - AI驱动的PPT图片和视频生成"
     branch: main
@@ -64,6 +66,7 @@ modules:
   - name: excalidraw-diagram-skill
     repo: "https://github.com/coleam00/excalidraw-diagram-skill"
     category: skills
+    target_path: "skills/excalidraw-diagram"
     tags: [diagram, excalidraw, visualization, architecture]
     description: "Excalidraw Diagram Skill - 生成论证性图表的 Agent skill"
 

@@ -32,7 +32,7 @@ PLATFORM_CONFIGS = {
         "name": "Claude Code",
         "frontmatter_fields": ["name", "description", "license"],
         "title_template": "# {skill_name} Skill",
-        "title_pattern": r"#\s*\S+\s+Skill",
+        "title_pattern": r"#\s*.+\s+Skill\s*$",
         "description_prefix": "Use this skill when",
         "trigger_format": "Claude Code skill format",
     },
@@ -40,7 +40,7 @@ PLATFORM_CONFIGS = {
         "name": "Codex",
         "frontmatter_fields": ["name", "description"],
         "title_template": "# {skill_name} for Codex",
-        "title_pattern": r"#\s*\S+\s+for\s+Codex",
+        "title_pattern": r"#\s*.+\s+for\s+Codex\s*$",
         "description_prefix": "Use when",
         "trigger_format": "Codex skill format",
     },
@@ -48,7 +48,7 @@ PLATFORM_CONFIGS = {
         "name": "OpenCode",
         "frontmatter_fields": ["name", "description"],
         "title_template": "# {skill_name} for OpenCode",
-        "title_pattern": r"#\s*\S+\s+for\s+OpenCode",
+        "title_pattern": r"#\s*.+\s+for\s+OpenCode\s*$",
         "description_prefix": "Use this skill when",
         "trigger_format": "OpenCode skill format",
     },
@@ -56,7 +56,7 @@ PLATFORM_CONFIGS = {
         "name": "OpenClaw",
         "frontmatter_fields": ["name", "description"],
         "title_template": "# {skill_name} for OpenClaw",
-        "title_pattern": r"#\s*\S+\s+for\s+OpenClaw",
+        "title_pattern": r"#\s*.+\s+for\s+OpenClaw\s*$",
         "description_prefix": "Use this skill when",
         "trigger_format": "OpenClaw skill format",
     },
@@ -64,11 +64,28 @@ PLATFORM_CONFIGS = {
         "name": "Cursor",
         "frontmatter_fields": ["name", "description", "version"],
         "title_template": "# {skill_name}",
-        "title_pattern": r"#\s*\S+",
+        "title_pattern": None,
         "description_prefix": "A Cursor AI skill for",
         "trigger_format": "Cursor skill format",
     },
 }
+
+
+def first_nonempty_line(text: str) -> str:
+    for line in text.splitlines():
+        if line.strip():
+            return line.strip()
+    return ""
+
+
+def strip_known_prefix(text: str, prefixes: list[str]) -> str:
+    stripped = text.strip()
+    lowered = stripped.lower()
+    for prefix in prefixes:
+        prefix_lower = prefix.lower()
+        if lowered.startswith(prefix_lower):
+            return stripped[len(prefix):].strip()
+    return stripped
 
 
 def parse_skill_file(file_path: Path) -> dict:
@@ -102,15 +119,18 @@ def detect_platform(skill_data: dict) -> Optional[str]:
     fm = skill_data["frontmatter"]
 
     # 从标题检测（最准确）
+    first_line = first_nonempty_line(body)
     for platform, config in PLATFORM_CONFIGS.items():
         # 检查标题是否匹配平台特定格式
-        first_line = body.split("\n")[0]
-        if re.search(config["title_pattern"], first_line, re.IGNORECASE):
+        title_pattern = config.get("title_pattern")
+        if title_pattern and re.search(title_pattern, first_line, re.IGNORECASE):
             return platform
 
     # 从 frontmatter 检测
     if "license" in fm:
         return "claude"
+    if "version" in fm and str(fm.get("version")).strip():
+        return "cursor"
 
     # 从描述中检测平台引用
     description = fm.get("description", "")
@@ -141,8 +161,12 @@ def convert_to_platform(
     skill_name = fm.get("name", "unknown-skill")
 
     # 处理标题
-    first_line = body.split("\n")[0]
-    rest_content = body[len(first_line):].lstrip("\n")
+    first_line = first_nonempty_line(body)
+    body_lines = body.splitlines()
+    if body_lines and body_lines[0].strip() == first_line:
+        rest_content = "\n".join(body_lines[1:]).lstrip("\n")
+    else:
+        rest_content = body
 
     # 移除现有标题中的平台后缀
     new_title = re.sub(
@@ -186,7 +210,11 @@ def convert_to_platform(
         elif target_platform == "cursor":
             # Cursor 使用 "A Cursor AI skill for"
             if not description.startswith("A Cursor AI skill"):
-                description = f"A Cursor AI skill for {description.lower().lstrip('use when use this skill when ')}"
+                description_body = strip_known_prefix(
+                    description,
+                    ["Use this skill when", "Use when", "A Cursor AI skill for"],
+                )
+                description = f"A Cursor AI skill for {description_body[:1].lower()}{description_body[1:]}" if description_body else "A Cursor AI skill"
 
     # 构建新的 frontmatter
     new_fm = {}
@@ -227,6 +255,7 @@ def convert_single_skill(
 
         # 如果指定了输出路径，复制原文件
         if output_path:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy(source_path, output_path)
             print(f"   Copied original file to: {output_path}")
             return output_path, False
@@ -243,6 +272,7 @@ def convert_single_skill(
         # 在源文件同目录创建目标平台版本
         target_path = source_path.parent / f"SKILL.{target_platform}.md"
 
+    target_path.parent.mkdir(parents=True, exist_ok=True)
     target_path.write_text(converted_content, encoding="utf-8")
 
     if was_converted:
