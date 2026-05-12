@@ -63,6 +63,14 @@ modules:
     description: "NanoBanana PPT Skills - AI驱动的PPT图片和视频生成"
     branch: main
 
+  - name: guizang-ppt-skill
+    repo: "https://github.com/op7418/guizang-ppt-skill"
+    category: skills
+    target_path: "skills/guizang-ppt-skill"
+    tags: [ppt, presentation, html, magazine, swiss-style, cover]
+    description: "Guizang PPT Skill - 生成杂志风/瑞士风单文件 HTML 横向翻页 PPT 和封面"
+    branch: main
+
   - name: excalidraw-diagram-skill
     repo: "https://github.com/coleam00/excalidraw-diagram-skill"
     category: skills

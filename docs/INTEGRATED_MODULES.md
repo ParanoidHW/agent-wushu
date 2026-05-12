@@ -123,7 +123,47 @@ python generate_ppt_video.py \
 
 ---
 
-### 3. Excalidraw Diagram Skill
+### 3. Guizang PPT Skill
+
+**路径**: [`skills/guizang-ppt-skill/`](../skills/guizang-ppt-skill/)
+
+**源仓库**: [op7418/guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill)
+
+**标签**: `ppt`, `presentation`, `html`, `magazine`, `swiss-style`, `cover`
+
+**功能描述**:
+生成单文件 HTML 横向翻页网页 PPT，并支持按同一视觉系统生成公众号、小红书、视频号等平台封面。
+
+| 功能 | 说明 |
+|------|------|
+| 横向翻页网页 PPT | 键盘、滚轮、触屏和 ESC 索引导航 |
+| 电子杂志风 | 衬线标题、流体背景、暖色主题，适合叙事型分享 |
+| 瑞士国际主义风 | 网格、点阵、高反差锚点色，适合数据/产品/工程表达 |
+| 本地模板 | `assets/template.html` 和 `assets/template-swiss.html` 单文件模板 |
+| 配图流程 | Codex 环境下可选生成并插入 PPT 配图 |
+| 封面生成 | 支持公众号头图、分享卡、小红书封面、视频号横版封面 |
+
+**核心文件**:
+| 文件 | 功能 |
+|------|------|
+| `SKILL.md` | Skill 工作流和使用规则 |
+| `assets/template.html` | 电子杂志风 HTML 模板 |
+| `assets/template-swiss.html` | 瑞士国际主义 HTML 模板 |
+| `references/layouts.md` | 电子杂志风布局 |
+| `references/layouts-swiss.md` | 瑞士风布局 |
+| `scripts/validate-swiss-deck.mjs` | 瑞士风版式校验脚本 |
+
+**使用示例**:
+```bash
+# 校验瑞士风 deck
+node skills/guizang-ppt-skill/scripts/validate-swiss-deck.mjs path/to/index.html
+```
+
+**许可证**: MIT
+
+---
+
+### 4. Excalidraw Diagram Skill
 
 **路径**: [`skills/excalidraw-diagram/`](../skills/excalidraw-diagram/)
 
@@ -263,6 +303,7 @@ CLI-Anything 项目为 OpenCode 提供的命令集，包含大量 CLI 工具的 
 |------|------|------|--------|
 | anthropics-pptx-skill | skills | pptx, claude | [anthropics/skills](https://github.com/anthropics/skills) |
 | nanobanana-ppt-skill | skills | pptx, video, kling | [op7418/NanoBanana-PPT-Skills](https://github.com/op7418/NanoBanana-PPT-Skills) |
+| guizang-ppt-skill | skills | ppt, html, magazine | [op7418/guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill) |
 | excalidraw-diagram-skill | skills | diagram, visualization | [coleam00/excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill) |
 | skill-converter | tools | converter, cross-platform | 本地开发 |
 | opencode-commands | plugins | opencode | [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) |
@@ -276,5 +317,6 @@ CLI-Anything 项目为 OpenCode 提供的命令集，包含大量 CLI 工具的 
 | 本仓库 | MIT |
 | anthropics-pptx | Proprietary (参见 LICENSE.txt) |
 | nanobanana-ppt | MIT |
+| guizang-ppt-skill | MIT |
 | excalidraw-diagram | MIT |
 | opencode-commands | MIT (CLI-Anything) |
