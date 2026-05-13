@@ -161,6 +161,8 @@ See `references/analysis-framework.md` for a fuller template.
 
 Prefer `pptxgenjs` for editable decks.
 
+When generating, editing, inspecting, or QA-rendering `.pptx` files, also follow the installed `pptx` skill. Treat this skill as the paper-analysis, evidence, and narrative layer; treat `pptx` as the deck implementation, formatting, and PowerPoint QA layer. If formatting, layout, or PPTX implementation principles conflict, follow the `pptx` skill.
+
 Design rules:
 
 - Unless the user explicitly requests another language, write the PPT slide titles, bullets, takeaways, table labels, and speaker-facing explanatory text in Chinese. Keep paper titles, method names, dataset names, code symbols, equations, and citation labels in their original language when that improves precision.
