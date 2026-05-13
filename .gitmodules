@@ -15,3 +15,6 @@
 [submodule "skills/agent-research-skills"]
 	path = skills/agent-research-skills
 	url = https://github.com/lingzhi227/agent-research-skills.git
+[submodule "skills/guizang-ppt-skill"]
+	path = skills/guizang-ppt-skill
+	url = https://github.com/op7418/guizang-ppt-skill.git
