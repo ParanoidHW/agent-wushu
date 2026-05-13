@@ -161,6 +161,7 @@ Prefer `pptxgenjs` for editable decks.
 
 Design rules:
 
+- Unless the user explicitly requests another language, write the PPT slide titles, bullets, takeaways, table labels, and speaker-facing explanatory text in Chinese. Keep paper titles, method names, dataset names, code symbols, equations, and citation labels in their original language when that improves precision.
 - Use 16:9 widescreen layout.
 - Keep a professional palette. Outside black and white, use no more than four colors; prefer gray/charcoal plus one restrained accent and one red highlight color for critical points.
 - Use dense but organized pages: one main claim, 2-4 evidence blocks, one emphasized takeaway when useful.
