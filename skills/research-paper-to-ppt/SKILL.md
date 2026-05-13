@@ -43,6 +43,7 @@ Every numerical claim, chart interpretation, and experimental result must cite t
 
 - Locate the PDF, source package, `.tex`, `.bib`, figures, existing PPT/scripts, and package dependencies.
 - Prefer paper source (`<source_dir>/main.tex`, `<source_dir>/reference.bib`, `<source_dir>/figs/`) over PDF-only extraction when available.
+- For arXiv papers, prioritize downloading the arXiv source tarball before relying on PDF-only extraction. If the source contains `.tex`, tables, and figure files, use those assets as the primary evidence path because they preserve captions, formulas, tables, and figure fidelity much better than OCR or PDF region extraction.
 - Record output paths before editing:
   - `deep_research_<slug>/`
   - `<paper_title_or_slug>_analysis.md`
@@ -120,6 +121,7 @@ When using image generation:
 If formulas need to look polished and do not need to be editable, render LaTeX to SVG and insert the SVG.
 
 - Use `latex` + `dvisvgm`.
+- Render formulas in a preprocessing step before running the Node/PptxGenJS deck generator. Do not shell out to LaTeX from inside the Node PPT generation path unless there is no practical alternative; precomputed SVGs are more stable, cacheable, and easier to QA.
 - Cache generated SVG files; do not rerender every run.
 - Keep original equation text in the Markdown report for traceability.
 - Never stretch equation images. Compute display size from the SVG/image aspect ratio before inserting.
@@ -164,13 +166,16 @@ Design rules:
 - Unless the user explicitly requests another language, write the PPT slide titles, bullets, takeaways, table labels, and speaker-facing explanatory text in Chinese. Keep paper titles, method names, dataset names, code symbols, equations, and citation labels in their original language when that improves precision.
 - Use 16:9 widescreen layout.
 - Keep a professional palette. Outside black and white, use no more than four colors; prefer gray/charcoal plus one restrained accent and one red highlight color for critical points.
+- Tune information density to the deck purpose. For an external introduction deck, do not make it a thin abstract or an appendix dump: include design rationale, evidence chains, and boundary conditions, but integrate them into readable topic pages.
 - Use dense but organized pages: one main claim, 2-4 evidence blocks, one emphasized takeaway when useful.
-- Use tables for comparisons and infra implications.
+- Use tables for comparisons and infra implications. Center tables by default, especially metric tables, ablation tables, and method comparison tables in report-style decks.
 - Use extracted paper figures for evidence; cite them on-slide with `Fig.` labels.
 - Use generated diagrams only as conceptual aids, and label them as generated or reconstructed.
 - Do not stretch images, equations, heatmaps, plots, or attention maps. Use aspect-ratio fit logic for every figure and formula.
 - Render formulas as LaTeX images unless the user explicitly requires editable formulas.
 - Use red bold styling or red outline callouts sparingly for high-priority information only.
+- After the first PPT draft, perform a content integration pass: newly discovered details should be merged into the most relevant existing topic slide instead of being appended mechanically at the end. Add new slides only when the material forms a distinct argument or evidence block.
+- Avoid production-process wording in user-facing slides, including phrases such as `对外口径`, `讲解要点`, `不要过度声称`, `制作说明`, `占位`, and `TODO`. Rewrite these as natural content statements, evidence caveats, or speaker notes that do not expose the creation process.
 - Include AI infra/implementation analysis when relevant:
   - required hardware instructions,
   - theoretical throughput,
@@ -223,7 +228,18 @@ Check for:
 - excessive whitespace,
 - table text too small,
 - title/tag collision,
-- leftover placeholders.
+- leftover placeholders,
+- English slide titles or UI labels when the user did not request an English deck,
+- production-process wording such as `对外口径`, `讲解要点`, `不要过度声称`, `制作说明`, `占位`, `TODO`, `TBD`, or `placeholder`.
+
+Also run a text QA pass with `markitdown` or equivalent PPTX text extraction:
+
+```bash
+python -m markitdown deck.pptx > qa_render/deck_text.md
+rg -n "PLACEHOLDER|TODO|TBD|placeholder|对外口径|讲解要点|不要过度声称|制作说明|占位" qa_render/deck_text.md
+```
+
+Use this extracted text to catch residual placeholders, English headings in a default-Chinese deck, and authoring artifacts that may not stand out in rendered screenshots.
 
 If visual QA finds issues, patch the generator script and regenerate.
 
