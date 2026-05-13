@@ -78,6 +78,21 @@ modules:
     tags: [diagram, excalidraw, visualization, architecture]
     description: "Excalidraw Diagram Skill - 生成论证性图表的 Agent skill"
 
+  - name: agent-research-skills
+    repo: "https://github.com/lingzhi227/agent-research-skills"
+    category: skills
+    target_path: "skills/agent-research-skills"
+    tags: [research, paper, literature, academic, slides]
+    description: "Agent Research Skills - 深度研究、论文写作、实验和幻灯片生成 skill 集合"
+    branch: main
+
+  - name: research-paper-to-ppt
+    repo: "local"
+    category: skills
+    target_path: "skills/research-paper-to-ppt"
+    tags: [research, paper, pptx, presentation, analysis]
+    description: "自定义 Research Paper to PPT skill - 论文分析报告和可编辑 PPTX 生成流程"
+
   # ========== Tools ==========
   - name: skill-converter
     repo: "local"

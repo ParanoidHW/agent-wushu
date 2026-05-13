@@ -228,6 +228,59 @@ uv run python render_excalidraw.py diagram.excalidraw
 
 ---
 
+### 5. Agent Research Skills
+
+**路径**: [`skills/agent-research-skills/`](../skills/agent-research-skills/)
+
+**源仓库**: [lingzhi227/agent-research-skills](https://github.com/lingzhi227/agent-research-skills)
+
+**标签**: `research`, `paper`, `literature`, `academic`, `slides`
+
+**功能描述**:
+面向学术研究工作流的 skill 集合，包含深度文献调研、论文写作、实验设计、图表生成和幻灯片生成等能力。
+
+**常用 skill**:
+| 路径 | 功能 |
+|------|------|
+| `skills/deep-research/` | 系统性文献调研和研究报告 |
+| `skills/slide-generation/` | 将论文或研究材料转为演示幻灯片 |
+| `skills/paper-writing-section/` | 学术论文分节写作 |
+| `skills/figure-generation/` | 论文图表生成 |
+| `skills/table-generation/` | 论文表格生成 |
+
+**许可证**: 参见源仓库
+
+---
+
+### 6. Research Paper to PPT
+
+**路径**: [`skills/research-paper-to-ppt/`](../skills/research-paper-to-ppt/)
+
+**源仓库**: 本地自定义
+
+**标签**: `research`, `paper`, `pptx`, `presentation`, `analysis`
+
+**功能描述**:
+将论文 PDF、技术文章、源码目录或代码仓库转为严谨的 Markdown 研究报告、可复用图片/公式资产和可编辑 16:9 PPTX，并要求渲染 QA。
+
+**依赖 skill**:
+| Skill | 来源 |
+|------|------|
+| `pptx` | [`skills/anthropics-pptx/skills/pptx/`](../skills/anthropics-pptx/skills/pptx/) |
+| `deep-research` / `slide-generation` | [`skills/agent-research-skills/skills/`](../skills/agent-research-skills/skills/) |
+| `imagegen` | Codex 内置系统 skill，不提交到本仓库 |
+
+**核心文件**:
+| 文件 | 功能 |
+|------|------|
+| `SKILL.md` | 论文分析、资产提取、PPT 生成和 QA 工作流 |
+| `references/analysis-framework.md` | Markdown 报告、相关工作、代码核验和 AI infra 分析模板 |
+| `references/asset-qa.md` | 图片裁剪、PPT 图像适配和渲染 QA 片段 |
+
+**许可证**: 本仓库 MIT
+
+---
+
 ## Tools
 
 ### Skill Converter
@@ -305,6 +358,8 @@ CLI-Anything 项目为 OpenCode 提供的命令集，包含大量 CLI 工具的 
 | nanobanana-ppt-skill | skills | pptx, video, kling | [op7418/NanoBanana-PPT-Skills](https://github.com/op7418/NanoBanana-PPT-Skills) |
 | guizang-ppt-skill | skills | ppt, html, magazine | [op7418/guizang-ppt-skill](https://github.com/op7418/guizang-ppt-skill) |
 | excalidraw-diagram-skill | skills | diagram, visualization | [coleam00/excalidraw-diagram-skill](https://github.com/coleam00/excalidraw-diagram-skill) |
+| agent-research-skills | skills | research, academic, slides | [lingzhi227/agent-research-skills](https://github.com/lingzhi227/agent-research-skills) |
+| research-paper-to-ppt | skills | research, paper, pptx | 本地自定义 |
 | skill-converter | tools | converter, cross-platform | 本地开发 |
 | opencode-commands | plugins | opencode | [HKUDS/CLI-Anything](https://github.com/HKUDS/CLI-Anything) |
 
@@ -319,4 +374,6 @@ CLI-Anything 项目为 OpenCode 提供的命令集，包含大量 CLI 工具的 
 | nanobanana-ppt | MIT |
 | guizang-ppt-skill | MIT |
 | excalidraw-diagram | MIT |
+| agent-research-skills | 参见源仓库 |
+| research-paper-to-ppt | MIT |
 | opencode-commands | MIT (CLI-Anything) |

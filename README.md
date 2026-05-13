@@ -57,13 +57,13 @@ python wushu.py status
 
 ## 已集成模块
 
-当前已集成 **4 Skills + 1 Tool + 1 Plugin**。
+当前已集成 **6 Skills + 1 Tool + 1 Plugin**。
 
 👉 **详细说明请查看**: [已集成模块文档](./docs/INTEGRATED_MODULES.md)
 
 | 类别 | 数量 | 链接 |
 |------|------|------|
-| Skills | 4 | [查看详情](./docs/INTEGRATED_MODULES.md#skills) |
+| Skills | 6 | [查看详情](./docs/INTEGRATED_MODULES.md#skills) |
 | Tools | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#tools) |
 | Plugins | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#plugins) |
 
@@ -74,6 +74,8 @@ python wushu.py status
 - [NanoBanana PPT Skills](./skills/nanobanana-ppt/) - AI PPT 生成
 - [Guizang PPT Skill](./skills/guizang-ppt-skill/) - 杂志风/瑞士风网页 PPT 和封面生成
 - [Excalidraw Diagram Skill](./skills/excalidraw-diagram/) - 论证性图表生成
+- [Agent Research Skills](./skills/agent-research-skills/) - 深度研究、论文写作、实验和幻灯片生成 skill 集合
+- [Research Paper to PPT](./skills/research-paper-to-ppt/) - 论文分析报告和可编辑 PPTX 生成流程
 
 **Tools:**
 - [Skill Converter](./tools/skill_converter.py) - 跨平台格式转换
