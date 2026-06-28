@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Interaction Record Viewer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --text: #1c2430;
+      --muted: #667085;
+      --line: #d8dee8;
+      --user: #e9f4ff;
+      --agent: #eef8f1;
+      --notes: #fff7df;
+      --accent: #1b6fd8;
+      --accent-strong: #155bb4;
+      --shadow: 0 12px 30px rgba(18, 28, 45, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 72px;
+      padding: 14px 0;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .file-input {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      min-height: 40px;
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 650;
+      padding: 0 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .file-input:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+    }
+
+    .file-input input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    button {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--text);
+      font: inherit;
+      font-weight: 620;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      border-color: #aab4c3;
+    }
+
+    main {
+      padding: 24px 0 42px;
+    }
+
+    .notice {
+      margin-bottom: 18px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      color: var(--muted);
+    }
+
+    .notice strong {
+      color: var(--text);
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .meta-item {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 10px 12px;
+    }
+
+    .meta-key {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .meta-value {
+      margin-top: 2px;
+      overflow-wrap: anywhere;
+      font-weight: 620;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      margin: 12px 0 16px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .turn-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    details.turn {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    details.turn summary {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      cursor: pointer;
+      list-style: none;
+      min-height: 58px;
+    }
+
+    details.turn summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .chevron {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      color: var(--accent);
+      border: 1px solid #c7daf5;
+      font-size: 14px;
+      transition: transform 0.15s ease;
+    }
+
+    details[open] .chevron {
+      transform: rotate(90deg);
+    }
+
+    .turn-title {
+      min-width: 0;
+      font-weight: 760;
+      overflow-wrap: anywhere;
+    }
+
+    .turn-count {
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .turn-body {
+      border-top: 1px solid var(--line);
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .section {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .section h3 {
+      margin: 0;
+      padding: 8px 12px;
+      font-size: 14px;
+      letter-spacing: 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .section.user h3 {
+      background: var(--user);
+    }
+
+    .section.agent h3 {
+      background: var(--agent);
+    }
+
+    .section.notes h3,
+    .section.tags h3 {
+      background: var(--notes);
+    }
+
+    .content {
+      padding: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .content > :first-child {
+      margin-top: 0;
+    }
+
+    .content > :last-child {
+      margin-bottom: 0;
+    }
+
+    pre {
+      max-width: 100%;
+      overflow: auto;
+      padding: 12px;
+      border-radius: 8px;
+      background: #101828;
+      color: #f2f4f7;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 0.94em;
+    }
+
+    .mermaid {
+      max-width: 100%;
+      overflow-x: auto;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfe;
+      text-align: center;
+    }
+
+    .MathJax_Display,
+    mjx-container[display="true"] {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+      padding: 4px 0;
+    }
+
+    .math-block {
+      max-width: 100%;
+      overflow-x: auto;
+      padding: 4px 0;
+    }
+
+    :not(pre) > code {
+      padding: 0.1em 0.25em;
+      border-radius: 4px;
+      background: #eef2f6;
+    }
+
+    blockquote {
+      margin: 0;
+      padding: 0 0 0 12px;
+      border-left: 3px solid #b5c3d8;
+      color: #4b5563;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      display: block;
+      overflow-x: auto;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .empty {
+      padding: 32px 20px;
+      border: 1px dashed #b9c3d2;
+      border-radius: 8px;
+      text-align: center;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.6);
+    }
+
+    .error {
+      border-color: #f2a6a6;
+      background: #fff1f1;
+      color: #8a1f1f;
+    }
+
+    @media (max-width: 720px) {
+      .wrap {
+        width: min(100% - 20px, 1120px);
+      }
+
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .actions > * {
+        flex: 1 1 auto;
+        justify-content: center;
+      }
+
+      details.turn summary {
+        grid-template-columns: auto 1fr;
+      }
+
+      .turn-count {
+        grid-column: 2;
+      }
+    }
+  </style>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]],
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+        processEscapes: true
+      },
+      svg: {
+        fontCache: "global"
+      },
+      startup: {
+        typeset: false
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script type="module">
+    window.mermaidReady = import("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs")
+      .then((module) => {
+        const mermaid = module.default;
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "strict",
+          theme: "default"
+        });
+        window.mermaid = mermaid;
+        return mermaid;
+      })
+      .catch((error) => {
+        console.warn("Mermaid failed to load:", error);
+        return null;
+      });
+  </script>
+</head>
+<body>
+  <header>
+    <div class="wrap topbar">
+      <div>
+        <h1 id="pageTitle">Interaction Record Viewer</h1>
+        <p class="subtitle" id="pageSubtitle">导入符合 spec 的 Markdown 文件，按轮次折叠查看用户和 Agent 的交互。</p>
+      </div>
+      <div class="actions">
+        <label class="file-input">
+          导入 Markdown
+          <input id="fileInput" type="file" accept=".md,.markdown,text/markdown,text/plain">
+        </label>
+        <button id="expandAll" type="button">全部展开</button>
+        <button id="collapseAll" type="button">全部折叠</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="message" class="notice">
+      <strong>等待导入。</strong> 请选择按 <code>interaction-record-spec.md</code> 编写的 Markdown 交互记录。
+    </section>
+    <section id="meta" class="meta" hidden></section>
+    <div class="toolbar">
+      <span id="summary">尚未加载记录</span>
+      <span id="fileName"></span>
+    </div>
+    <section id="turnList" class="turn-list">
+      <div class="empty">导入文件后，每轮 QA 会显示为一个可单独折叠和展开的区块。</div>
+    </section>
+  </main>
+
+  <script>
+    const fileInput = document.querySelector("#fileInput");
+    const message = document.querySelector("#message");
+    const metaEl = document.querySelector("#meta");
+    const turnList = document.querySelector("#turnList");
+    const summaryEl = document.querySelector("#summary");
+    const fileNameEl = document.querySelector("#fileName");
+    const pageTitle = document.querySelector("#pageTitle");
+    const pageSubtitle = document.querySelector("#pageSubtitle");
+    const expandAll = document.querySelector("#expandAll");
+    const collapseAll = document.querySelector("#collapseAll");
+
+    fileInput.addEventListener("change", async (event) => {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const record = parseInteractionRecord(text);
+        renderRecord(record, file.name);
+      } catch (error) {
+        renderError(error.message || String(error));
+      }
+    });
+
+    expandAll.addEventListener("click", () => {
+      document.querySelectorAll("details.turn").forEach((item) => {
+        item.open = true;
+      });
+    });
+
+    collapseAll.addEventListener("click", () => {
+      document.querySelectorAll("details.turn").forEach((item) => {
+        item.open = false;
+      });
+    });
+
+    window.addEventListener("load", () => {
+      renderEnhancements();
+    });
+
+    function parseInteractionRecord(source) {
+      const normalized = source.replace(/\r\n?/g, "\n");
+      const { frontMatter, body } = extractFrontMatter(normalized);
+      const metadata = parseFrontMatter(frontMatter);
+      const turns = parseTurns(body);
+
+      if (turns.length === 0) {
+        throw new Error("未找到任何 `## Turn` 轮次。请检查文件是否符合 interaction-record-spec.md。");
+      }
+
+      return { metadata, turns };
+    }
+
+    function extractFrontMatter(source) {
+      if (!source.startsWith("---\n")) {
+        return { frontMatter: "", body: source };
+      }
+
+      const endIndex = source.indexOf("\n---", 4);
+      if (endIndex === -1) {
+        return { frontMatter: "", body: source };
+      }
+
+      const afterFence = source.slice(endIndex + 4);
+      if (afterFence.startsWith("\n")) {
+        return {
+          frontMatter: source.slice(4, endIndex),
+          body: afterFence.slice(1)
+        };
+      }
+
+      return {
+        frontMatter: source.slice(4, endIndex),
+        body: afterFence
+      };
+    }
+
+    function parseFrontMatter(frontMatter) {
+      const result = {};
+      const stack = [{ indent: -1, object: result }];
+
+      frontMatter.split("\n").forEach((line) => {
+        if (!line.trim() || line.trim().startsWith("#")) return;
+        const match = line.match(/^(\s*)([A-Za-z0-9_.-]+):\s*(.*)$/);
+        if (!match) return;
+
+        const indent = match[1].length;
+        const key = match[2];
+        const value = cleanYamlValue(match[3]);
+
+        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+          stack.pop();
+        }
+
+        const parent = stack[stack.length - 1].object;
+        if (value === "") {
+          parent[key] = {};
+          stack.push({ indent, object: parent[key] });
+        } else {
+          parent[key] = value;
+        }
+      });
+
+      return result;
+    }
+
+    function cleanYamlValue(value) {
+      const trimmed = value.trim();
+      if (
+        (trimmed.startsWith("\"") && trimmed.endsWith("\"")) ||
+        (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ) {
+        return trimmed.slice(1, -1);
+      }
+      return trimmed;
+    }
+
+    function parseTurns(body) {
+      const lines = body.split("\n");
+      const turns = [];
+      let current = null;
+      let activeSection = null;
+      let activeLines = [];
+
+      function finishSection() {
+        if (!current || !activeSection) return;
+        current.sections[activeSection] = activeLines.join("\n").trim();
+        activeSection = null;
+        activeLines = [];
+      }
+
+      function finishTurn() {
+        finishSection();
+        if (!current) return;
+        current.user = current.sections.user || "";
+        current.agent = current.sections.agent || "";
+        current.notes = current.sections.notes || "";
+        current.tags = current.sections.tags || "";
+        turns.push(current);
+        current = null;
+      }
+
+      for (const line of lines) {
+        const turnMatch = line.match(/^##\s+Turn\s+(\d+)(?::\s*(.*))?\s*$/i);
+        if (turnMatch) {
+          finishTurn();
+          current = {
+            number: Number(turnMatch[1]),
+            title: turnMatch[2] ? turnMatch[2].trim() : "",
+            sections: {}
+          };
+          activeSection = null;
+          activeLines = [];
+          continue;
+        }
+
+        if (!current) continue;
+
+        const sectionMatch = line.match(/^###\s+(User|Agent|Notes|Tags)\s*$/i);
+        if (sectionMatch) {
+          finishSection();
+          activeSection = sectionMatch[1].toLowerCase();
+          activeLines = [];
+          continue;
+        }
+
+        if (activeSection) {
+          activeLines.push(line);
+        }
+      }
+
+      finishTurn();
+      return turns;
+    }
+
+    function renderRecord(record, fileName) {
+      const title = getMetadataValue(record.metadata, "title") || "Interaction Record Viewer";
+      const topic = getMetadataValue(record.metadata, "topic");
+      pageTitle.textContent = title;
+      pageSubtitle.textContent = topic || "导入符合 spec 的 Markdown 文件，按轮次折叠查看用户和 Agent 的交互。";
+      fileNameEl.textContent = fileName;
+
+      message.className = "notice";
+      message.innerHTML = `<strong>已加载。</strong> ${escapeHtml(String(record.turns.length))} 轮 QA，可单独折叠和展开。`;
+      summaryEl.textContent = `${record.turns.length} 轮 QA`;
+
+      renderMetadata(record.metadata);
+      renderTurns(record.turns);
+      renderEnhancements();
+    }
+
+    function renderMetadata(metadata) {
+      const flat = flattenMetadata(metadata);
+      metaEl.innerHTML = "";
+
+      if (flat.length === 0) {
+        metaEl.hidden = true;
+        return;
+      }
+
+      flat.forEach(([key, value]) => {
+        const item = document.createElement("article");
+        item.className = "meta-item";
+        item.innerHTML = `
+          <div class="meta-key">${escapeHtml(key)}</div>
+          <div class="meta-value">${escapeHtml(String(value))}</div>
+        `;
+        metaEl.appendChild(item);
+      });
+      metaEl.hidden = false;
+    }
+
+    function renderTurns(turns) {
+      turnList.innerHTML = "";
+      turns.forEach((turn, index) => {
+        const details = document.createElement("details");
+        details.className = "turn";
+        details.open = index === 0;
+
+        const label = turn.title ? `Turn ${turn.number}: ${turn.title}` : `Turn ${turn.number}`;
+        details.innerHTML = `
+          <summary>
+            <span class="chevron" aria-hidden="true">›</span>
+            <span class="turn-title">${escapeHtml(label)}</span>
+            <span class="turn-count">${sectionCount(turn)} sections</span>
+          </summary>
+          <div class="turn-body"></div>
+        `;
+
+        const body = details.querySelector(".turn-body");
+        body.appendChild(renderSection("user", "User", turn.user));
+        body.appendChild(renderSection("agent", "Agent", turn.agent));
+
+        if (turn.notes) {
+          body.appendChild(renderSection("notes", "Notes", turn.notes));
+        }
+
+        if (turn.tags) {
+          body.appendChild(renderSection("tags", "Tags", turn.tags));
+        }
+
+        turnList.appendChild(details);
+      });
+    }
+
+    function renderSection(className, title, markdown) {
+      const section = document.createElement("section");
+      section.className = `section ${className}`;
+      section.innerHTML = `
+        <h3>${escapeHtml(title)}</h3>
+        <div class="content">${renderMarkdown(markdown || "_未记录内容_")}</div>
+      `;
+      return section;
+    }
+
+    function sectionCount(turn) {
+      return ["user", "agent", "notes", "tags"].filter((key) => turn[key]).length;
+    }
+
+    function flattenMetadata(metadata, prefix = "") {
+      const rows = [];
+      Object.entries(metadata || {}).forEach(([key, value]) => {
+        const fullKey = prefix ? `${prefix}.${key}` : key;
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+          rows.push(...flattenMetadata(value, fullKey));
+        } else {
+          rows.push([fullKey, value]);
+        }
+      });
+      return rows;
+    }
+
+    function getMetadataValue(metadata, key) {
+      if (!metadata) return "";
+      if (metadata[key]) return metadata[key];
+      return key.split(".").reduce((value, part) => {
+        if (!value || typeof value !== "object") return "";
+        return value[part] || "";
+      }, metadata);
+    }
+
+    function renderMarkdown(markdown) {
+      const placeholders = [];
+      const mathPlaceholders = [];
+      let text = escapeHtml(markdown || "");
+
+      text = text.replace(/```([A-Za-z0-9_-]+)?[ \t]*\n?([\s\S]*?)```/g, (_, language, code) => {
+        const token = `@@CODE_${placeholders.length}@@`;
+        const normalizedLanguage = String(language || "").trim().toLowerCase();
+        const cleanCode = code.replace(/^\n|\n$/g, "");
+        if (normalizedLanguage === "mermaid") {
+          placeholders.push(`<div class="mermaid">${cleanCode}</div>`);
+        } else {
+          const languageClass = normalizedLanguage ? ` class="language-${escapeHtml(normalizedLanguage)}"` : "";
+          placeholders.push(`<pre><code${languageClass}>${cleanCode}</code></pre>`);
+        }
+        return token;
+      });
+
+      text = protectMath(text, mathPlaceholders);
+      text = renderTables(text);
+      text = text.replace(/^######\s+(.+)$/gm, "<h6>$1</h6>");
+      text = text.replace(/^#####\s+(.+)$/gm, "<h5>$1</h5>");
+      text = text.replace(/^####\s+(.+)$/gm, "<h4>$1</h4>");
+      text = text.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
+      text = text.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
+      text = text.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+      text = text.replace(/^&gt;\s?(.+)$/gm, "<blockquote>$1</blockquote>");
+      text = text.replace(/`([^`]+)`/g, "<code>$1</code>");
+      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+      text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+      text = renderLists(text);
+      text = renderParagraphs(text);
+
+      mathPlaceholders.forEach((html, index) => {
+        text = text.replace(`@@MATH_${index}@@`, () => html);
+      });
+
+      placeholders.forEach((html, index) => {
+        text = text.replace(`@@CODE_${index}@@`, () => html);
+      });
+
+      return text;
+    }
+
+    function protectMath(text, mathPlaceholders) {
+      text = text.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+        const token = `@@MATH_${mathPlaceholders.length}@@`;
+        mathPlaceholders.push(`<div class="math-block">${match}</div>`);
+        return token;
+      });
+
+      text = text.replace(/\\\[([\s\S]*?)\\\]/g, (match) => {
+        const token = `@@MATH_${mathPlaceholders.length}@@`;
+        mathPlaceholders.push(`<div class="math-block">${match}</div>`);
+        return token;
+      });
+
+      text = text.replace(/\\\(([\s\S]*?)\\\)/g, (match) => {
+        const token = `@@MATH_${mathPlaceholders.length}@@`;
+        mathPlaceholders.push(match);
+        return token;
+      });
+
+      text = text.replace(/(^|[^\\$])\$([^\n$]+?)\$/g, (_, prefix, formula) => {
+        const token = `@@MATH_${mathPlaceholders.length}@@`;
+        mathPlaceholders.push(`$${formula}$`);
+        return `${prefix}${token}`;
+      });
+
+      return text;
+    }
+
+    async function renderEnhancements() {
+      await renderMermaidDiagrams();
+      renderMath();
+    }
+
+    async function renderMermaidDiagrams() {
+      if (!window.mermaid && window.mermaidReady) {
+        await window.mermaidReady;
+      }
+      if (!window.mermaid) return;
+      const diagrams = Array.from(document.querySelectorAll(".mermaid"));
+      diagrams.forEach((diagram, index) => {
+        if (!diagram.id) {
+          diagram.id = `mermaid-${Date.now()}-${index}`;
+        }
+        diagram.removeAttribute("data-processed");
+      });
+
+      try {
+        await window.mermaid.run({ nodes: diagrams });
+      } catch (error) {
+        console.warn("Mermaid render failed:", error);
+      }
+    }
+
+    function renderMath() {
+      if (!window.MathJax || !window.MathJax.typesetPromise) return;
+      window.MathJax.typesetClear && window.MathJax.typesetClear([turnList]);
+      window.MathJax.typesetPromise([turnList]).catch((error) => {
+        console.warn("MathJax render failed:", error);
+      });
+    }
+
+    function renderLists(text) {
+      return text.replace(/(?:^|\n)((?:[-*]\s+.+(?:\n|$))+)/g, (match, list) => {
+        const items = list.trim().split("\n").map((item) => item.replace(/^[-*]\s+/, "").trim());
+        return `\n<ul>${items.map((item) => `<li>${item}</li>`).join("")}</ul>\n`;
+      }).replace(/(?:^|\n)((?:\d+\.\s+.+(?:\n|$))+)/g, (match, list) => {
+        const items = list.trim().split("\n").map((item) => item.replace(/^\d+\.\s+/, "").trim());
+        return `\n<ol>${items.map((item) => `<li>${item}</li>`).join("")}</ol>\n`;
+      });
+    }
+
+    function renderParagraphs(text) {
+      const blockTags = /^(<\/?(h[1-6]|ul|ol|li|pre|blockquote|table|thead|tbody|tr|th|td|div)\b|@@CODE_|@@MATH_)/;
+      return text.split(/\n{2,}/).map((chunk) => {
+        const trimmed = chunk.trim();
+        if (!trimmed) return "";
+        if (blockTags.test(trimmed)) return trimmed;
+        return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
+      }).join("\n");
+    }
+
+    function renderTables(text) {
+      return text.replace(/((?:^\|.+\|\n?){2,})/gm, (tableBlock) => {
+        const rows = tableBlock.trim().split("\n");
+        if (rows.length < 2 || !/^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(rows[1])) {
+          return tableBlock;
+        }
+
+        const header = splitTableRow(rows[0]);
+        const bodyRows = rows.slice(2).map(splitTableRow);
+        return [
+          "<table>",
+          "<thead><tr>",
+          header.map((cell) => `<th>${cell}</th>`).join(""),
+          "</tr></thead>",
+          "<tbody>",
+          bodyRows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join(""),
+          "</tbody></table>"
+        ].join("");
+      });
+    }
+
+    function splitTableRow(row) {
+      return row.replace(/^\||\|$/g, "").split("|").map((cell) => cell.trim());
+    }
+
+    function renderError(error) {
+      message.className = "notice error";
+      message.innerHTML = `<strong>导入失败。</strong> ${escapeHtml(error)}`;
+      metaEl.hidden = true;
+      turnList.innerHTML = '<div class="empty">请修正 Markdown 文件后重新导入。</div>';
+      summaryEl.textContent = "未加载有效记录";
+      fileNameEl.textContent = "";
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+  </script>
+</body>
+</html>
