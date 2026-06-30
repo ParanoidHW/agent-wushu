@@ -15,6 +15,22 @@ Use this template for Chinese paper-review deliverables. Adapt headings when the
 - 提取文本：`<path>`
 - 图表：列出 Figure/Table 与本地图片路径；标明截图是否包含完整 caption，边距是否已经裁成窄边界。
 
+## 0.1 符号表
+
+每篇论文的符号可能不同，先澄清再解释公式。覆盖核心公式、指标、表格和系统量。
+
+| 符号 | 含义 | 作用域/索引 | 单位/取值 | 来源 | 易混点 |
+|---|---|---|---|---|---|
+| `<symbol>` | `<meaning>` | `<global/per-layer/per-token/per-request>` | `<unit/range>` | `<Eq./Section/Table>` | `<ambiguity>` |
+
+## 0.2 术语与数据构造说明
+
+解释论文中特定含义的术语，尤其是容易误读的训练数据、模型角色、mask、budget、benchmark 设定。
+
+| 术语 | 本文含义 | 不等于/易混项 | 证据来源 |
+|---|---|---|---|
+| `<term>` | `<definition in this paper>` | `<what it is not>` | `<Section/Table/Code>` |
+
 ## 1. 论文基本信息
 
 - 研究领域：
@@ -48,10 +64,12 @@ $$
 $$
 
 解释公式中的变量、单位、系统含义。
+公式中的每个变量都必须能在“0.1 符号表”中找到；如果论文复用了符号或符号含义不一致，在这里显式说明。
 
 ### 3.4 训练/实验/部署设计
 
 说明数据、baseline、公平性设置、指标、实现假设。
+对训练数据构造、teacher/student、target/draft、生成温度、prompt/chat template、过滤规则等信息做事实-缺口分离：论文明确报告什么，代码/配置确认什么，仍未知什么。
 
 ## 4. 关键结论
 
@@ -69,6 +87,16 @@ $$
 ### 4.3 是否验证了假设
 
 逐条对应论文假设、方法设计和实验结果。
+
+### 4.4 收益来源归因
+
+分开说明每个组件影响的是候选质量、accepted length、latency、memory，还是 serving throughput。
+
+| 组件/变化 | 对比基线 | 指标变化 | 影响路径 | 证据强度 |
+|---|---|---|---|---|
+| `<component>` | `<baseline>` | `<absolute/relative delta>` | `<quality/latency/memory>` | `<matched ablation / rough inferred decomposition>` |
+
+如果使用桥接 baseline 做粗分解，明确写“这是基于表格的近似归因，不是论文正式方差分解”。
 
 ## 5. Related Work 对比
 
@@ -111,6 +139,16 @@ $$
 | <mechanism> | `<path>` | `<url>` | 一致/部分一致/未开源 |
 
 明确说明 paper 技术细节不清楚时，源码如何补充；源码未覆盖时，不要过度推断。
+
+### 7.1 开源权重/配置对照
+
+当论文或 README 指向公开 checkpoint/model weights 时，检查 metadata/config，并与关键 baseline 做容量、结构、算法开关对比。
+
+| 权重/Checkpoint | 公开状态 | revision/commit | 参数量 | 架构/层数/宽度 | 关键配置字段 | 与 baseline 的差异 |
+|---|---|---|---:|---|---|---|
+| `<model>` | `<open/gated/private/unknown>` | `<sha>` | `<params>` | `<layers/hidden/heads>` | `<flags>` | `<capacity/algorithm/runtime>` |
+
+如果因为网络或权限无法读取配置，写明“未验证”，不要用 README 文字代替配置事实。
 
 ## 8. 优点与局限
 
