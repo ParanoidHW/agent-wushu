@@ -31,6 +31,23 @@ DEFAULT_STATE = ".interaction-recorder-state.json"
 IGNORED_ROLES = {"system", "developer", "tool", "function"}
 USER_ROLES = {"user", "human"}
 AGENT_ROLES = {"assistant", "agent", "ai"}
+TOOL_HOOK_EVENTS = {"pretooluse", "posttooluse", "tooluse", "toolcall", "tool_call", "mcp_tool_call"}
+TOOL_PROMPT_KEYS = {
+    "prompt",
+    "user_prompt",
+    "input_prompt",
+    "positive_prompt",
+    "negative_prompt",
+    "system_prompt",
+    "instructions",
+    "instruction",
+    "query",
+    "search_query",
+    "question",
+    "request",
+    "task",
+}
+SECONDARY_TOOL_PROMPT_KEYS = {"description", "text", "message", "input"}
 NOISE_PATTERNS = [
     re.compile(r"^\s*<environment_context>[\s\S]*?</environment_context>\s*$", re.I),
     re.compile(r"^\s*<codex_internal_context\b[\s\S]*?</codex_internal_context>\s*$", re.I),
@@ -63,7 +80,11 @@ def main(argv: list[str] | None = None) -> int:
             raw = sys.stdin.read()
             if not raw.strip():
                 raise RecorderError("stdin is empty; pass hook JSON or use the append subcommand")
-            turns = turns_from_payload(load_json(raw), include_partial=args.include_partial)
+            turns = turns_from_payload(
+                load_json(raw),
+                include_partial=args.include_partial,
+                include_process=args.include_process,
+            )
 
         if not turns:
             if not args.quiet:
@@ -119,6 +140,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Record a trailing user message without an agent response as an empty-agent turn.",
     )
+    parser.add_argument(
+        "--include-process",
+        action="store_true",
+        help="Include public process summaries from Codex transcripts in the Notes section.",
+    )
 
     subparsers = parser.add_subparsers(dest="command")
     append = subparsers.add_parser("append", help="Append one explicit QA turn.")
@@ -169,7 +195,14 @@ def load_json(raw: str) -> Any:
         raise RecorderError(f"stdin is not valid JSON: {error}") from error
 
 
-def turns_from_payload(payload: Any, include_partial: bool = False) -> list[Turn]:
+def turns_from_payload(
+    payload: Any,
+    include_partial: bool = False,
+    include_process: bool = False,
+) -> list[Turn]:
+    if isinstance(payload, dict) and is_tool_hook_payload(payload):
+        return turns_from_tool_hook_payload(payload)
+
     try:
         turns = turns_from_hook_payload(payload, include_partial=include_partial)
     except RecorderError:
@@ -179,12 +212,202 @@ def turns_from_payload(payload: Any, include_partial: bool = False) -> list[Turn
         return turns
 
     if isinstance(payload, dict):
-        return turns_from_codex_payload(payload)
+        return turns_from_codex_payload(payload, include_process=include_process)
 
     return []
 
 
-def turns_from_codex_payload(payload: dict[str, Any]) -> list[Turn]:
+def is_tool_hook_payload(payload: dict[str, Any]) -> bool:
+    event_name = normalize_role(
+        extract_first_text(payload, "hook_event_name", "hookEventName", "event_name", "eventName")
+    )
+    if event_name in TOOL_HOOK_EVENTS:
+        return True
+
+    nested = payload.get("event")
+    if isinstance(nested, dict) and is_tool_hook_payload(nested):
+        return True
+
+    return any(
+        key in payload
+        for key in (
+            "tool_name",
+            "toolName",
+            "tool_input",
+            "toolInput",
+            "tool_call",
+            "toolCall",
+            "mcp_tool",
+            "mcpTool",
+        )
+    )
+
+
+def turns_from_tool_hook_payload(payload: dict[str, Any]) -> list[Turn]:
+    nested = payload.get("event")
+    if isinstance(nested, dict) and not any(
+        key in payload for key in ("tool_name", "toolName", "tool_input", "toolInput")
+    ):
+        payload = nested
+
+    tool_name = extract_first_text(
+        payload,
+        "tool_name",
+        "toolName",
+        "name",
+        "tool",
+        "mcp_tool",
+        "mcpTool",
+    ) or "unknown-tool"
+    tool_input = first_present_value(
+        payload,
+        "tool_input",
+        "toolInput",
+        "arguments",
+        "args",
+        "parameters",
+        "params",
+        "input",
+    )
+    if tool_input is None:
+        tool_input = payload
+
+    prompt_entries = tool_prompt_entries(tool_input, tool_name)
+    if not prompt_entries and tool_input is not payload:
+        prompt_entries = tool_prompt_entries(payload, tool_name)
+    if not prompt_entries:
+        return []
+
+    prompt_text = format_tool_prompt_entries(prompt_entries)
+    tags = ["codex", "tool-prompt", "hook"]
+    if is_mcp_tool(tool_name):
+        tags.append("mcp")
+
+    return [
+        Turn(
+            user=prompt_text,
+            agent=f"Tool call: `{tool_name}`",
+            title=infer_title(f"{tool_name}: {prompt_text}"),
+            notes=tool_note(payload, tool_name),
+            tags=", ".join(tags),
+        )
+    ]
+
+
+def first_present_value(payload: dict[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in payload:
+            return payload.get(key)
+    return None
+
+
+def tool_prompt_entries(tool_input: Any, tool_name: str) -> list[tuple[str, str]]:
+    entries = collect_prompt_entries(tool_input, TOOL_PROMPT_KEYS)
+    if entries:
+        return dedupe_prompt_entries(entries)
+
+    if allow_secondary_tool_prompt(tool_name, tool_input):
+        return dedupe_prompt_entries(collect_prompt_entries(tool_input, SECONDARY_TOOL_PROMPT_KEYS))
+
+    return []
+
+
+def collect_prompt_entries(value: Any, key_names: set[str], path: str = "") -> list[tuple[str, str]]:
+    entries: list[tuple[str, str]] = []
+    if isinstance(value, dict):
+        for key, child in value.items():
+            key_path = f"{path}.{key}" if path else str(key)
+            if normalize_field_name(key) in key_names:
+                text = prompt_value_to_text(child)
+                if text:
+                    entries.append((key_path, text))
+                continue
+            if isinstance(child, (dict, list)):
+                entries.extend(collect_prompt_entries(child, key_names, key_path))
+        return entries
+
+    if isinstance(value, list):
+        for index, child in enumerate(value):
+            if isinstance(child, (dict, list)):
+                entries.extend(collect_prompt_entries(child, key_names, f"{path}[{index}]"))
+
+    return entries
+
+
+def dedupe_prompt_entries(entries: list[tuple[str, str]]) -> list[tuple[str, str]]:
+    seen: set[tuple[str, str]] = set()
+    unique: list[tuple[str, str]] = []
+    for label, text in entries:
+        fingerprint = (label, normalize_for_hash(text))
+        if fingerprint in seen:
+            continue
+        seen.add(fingerprint)
+        unique.append((label, text))
+    return unique
+
+
+def allow_secondary_tool_prompt(tool_name: str, tool_input: Any) -> bool:
+    lower_tool = tool_name.lower()
+    if is_mcp_tool(tool_name) or "agent" in lower_tool or "image" in lower_tool:
+        return True
+    if isinstance(tool_input, dict):
+        command_keys = {"command", "cmd", "script", "path", "file_path", "filename"}
+        input_keys = {normalize_field_name(key) for key in tool_input}
+        return not bool(input_keys & command_keys)
+    return False
+
+
+def prompt_value_to_text(value: Any) -> str:
+    text = extract_text(value)
+    if text:
+        return text
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True).strip()
+    return str(value).strip() if value is not None else ""
+
+
+def format_tool_prompt_entries(entries: list[tuple[str, str]]) -> str:
+    if len(entries) == 1:
+        return entries[0][1]
+
+    parts: list[str] = []
+    for label, text in entries:
+        parts.extend([f"#### {label}", "", text.strip(), ""])
+    return "\n".join(parts).strip()
+
+
+def tool_note(payload: dict[str, Any], tool_name: str) -> str:
+    parts = [part for part in [codex_note(payload)] if part]
+    parts.append(f"tool_name: {tool_name}")
+
+    tool_call_id = extract_first_text(
+        payload,
+        "tool_call_id",
+        "toolCallId",
+        "tool_use_id",
+        "toolUseId",
+        "call_id",
+        "callId",
+    )
+    cwd = extract_first_text(payload, "cwd", "working_directory", "workingDirectory")
+    if tool_call_id:
+        parts.append(f"tool_call_id: {tool_call_id}")
+    if cwd:
+        parts.append(f"cwd: {cwd}")
+    return "\n".join(parts)
+
+
+def is_mcp_tool(tool_name: str) -> bool:
+    lower = tool_name.lower()
+    return lower.startswith("mcp__") or lower.startswith("mcp.") or lower.startswith("mcp-")
+
+
+def normalize_field_name(value: Any) -> str:
+    text = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", str(value or ""))
+    return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+
+
+def turns_from_codex_payload(payload: dict[str, Any], include_process: bool = False) -> list[Turn]:
     """Extract a QA turn from native Codex hook payloads.
 
     Stop hooks normally include fields such as transcript_path, session_id,
@@ -225,7 +448,7 @@ def turns_from_codex_payload(payload: dict[str, Any]) -> list[Turn]:
 
     transcript = transcript_path_from_payload(payload)
     if transcript:
-        turns = turns_from_codex_transcript(transcript)
+        turns = turns_from_codex_transcript(transcript, include_process=include_process)
         if turns:
             latest = turns[-1]
             if agent_text and not latest.agent:
@@ -455,12 +678,14 @@ def latest_codex_transcript() -> Path | None:
     return latest
 
 
-def turns_from_codex_transcript(path: Path) -> list[Turn]:
+def turns_from_codex_transcript(path: Path, include_process: bool = False) -> list[Turn]:
     turns: list[Turn] = []
     pending_user = ""
     last_assistant = ""
     last_turn_id = ""
     session_id = ""
+    process_entries: list[tuple[str, str]] = []
+    process_seen: set[str] = set()
 
     try:
         lines = path.read_text(encoding="utf-8").splitlines()
@@ -488,32 +713,40 @@ def turns_from_codex_transcript(path: Path) -> list[Turn]:
             pending_user = extract_text(payload.get("message"))
             last_assistant = ""
             last_turn_id = ""
+            process_entries = []
+            process_seen = set()
             continue
 
         if item.get("type") == "event_msg" and payload_type == "task_started":
             last_turn_id = extract_first_text(payload, "turn_id", "turnId")
             continue
 
+        if include_process and pending_user:
+            collect_public_process_entry(payload, process_entries, process_seen)
+
         if item.get("type") == "event_msg" and payload_type == "task_complete":
             last_assistant = extract_text(payload.get("last_agent_message"))
             if pending_user and last_assistant:
+                notes = codex_note(
+                    {
+                        "hook_event_name": "transcript",
+                        "session_id": session_id,
+                        "turn_id": payload.get("turn_id") or last_turn_id,
+                    }
+                )
                 turns.append(
                     Turn(
                         user=pending_user,
                         agent=last_assistant,
                         title=infer_title(pending_user),
-                        notes=codex_note(
-                            {
-                                "hook_event_name": "transcript",
-                                "session_id": session_id,
-                                "turn_id": payload.get("turn_id") or last_turn_id,
-                            }
-                        ),
+                        notes=append_process_notes(notes, process_entries),
                         tags="codex, transcript",
                     )
                 )
                 pending_user = ""
                 last_assistant = ""
+                process_entries = []
+                process_seen = set()
             continue
 
         if item.get("type") == "response_item" and payload_type == "message":
@@ -523,23 +756,88 @@ def turns_from_codex_transcript(path: Path) -> list[Turn]:
                 last_assistant = extract_text(payload.get("content"))
 
     if pending_user and last_assistant:
+        notes = codex_note(
+            {
+                "hook_event_name": "transcript",
+                "session_id": session_id,
+                "turn_id": last_turn_id,
+            }
+        )
         turns.append(
             Turn(
                 user=pending_user,
                 agent=last_assistant,
                 title=infer_title(pending_user),
-                notes=codex_note(
-                    {
-                        "hook_event_name": "transcript",
-                        "session_id": session_id,
-                        "turn_id": last_turn_id,
-                    }
-                ),
+                notes=append_process_notes(notes, process_entries),
                 tags="codex, transcript",
             )
         )
 
     return turns
+
+
+def collect_public_process_entry(
+    payload: dict[str, Any],
+    entries: list[tuple[str, str]],
+    seen: set[str],
+) -> None:
+    """Collect public process signals only; never inspect encrypted reasoning."""
+    payload_type = payload.get("type")
+
+    if payload_type == "agent_message" and normalize_role(payload.get("phase")) == "commentary":
+        append_process_entry(entries, seen, "Update", extract_text(payload.get("message")))
+        return
+
+    if payload_type == "message":
+        role = normalize_role(payload.get("role"))
+        phase = normalize_role(payload.get("phase"))
+        if role == "assistant" and phase == "commentary":
+            append_process_entry(entries, seen, "Update", extract_text(payload.get("content")))
+        return
+
+    if payload_type == "reasoning":
+        summary = extract_text(payload.get("summary"))
+        if summary:
+            append_process_entry(entries, seen, "Reasoning summary", summary)
+
+
+def append_process_entry(
+    entries: list[tuple[str, str]],
+    seen: set[str],
+    label: str,
+    text: str,
+) -> None:
+    cleaned = compact_process_text(text)
+    if not cleaned:
+        return
+    fingerprint = normalize_for_hash(cleaned)
+    if fingerprint in seen:
+        return
+    seen.add(fingerprint)
+    entries.append((label, cleaned))
+
+
+def compact_process_text(text: str, max_chars: int = 1200) -> str:
+    cleaned = re.sub(r"\s+", " ", strip_noise(text)).strip()
+    if not cleaned:
+        return ""
+    if len(cleaned) <= max_chars:
+        return cleaned
+    return cleaned[: max_chars - 3].rstrip() + "..."
+
+
+def append_process_notes(notes: str, entries: list[tuple[str, str]], max_entries: int = 12) -> str:
+    if not entries:
+        return notes
+
+    lines = ["Key process:"]
+    for index, (label, text) in enumerate(entries[:max_entries], start=1):
+        lines.append(f"{index}. {label}: {text}")
+    if len(entries) > max_entries:
+        lines.append(f"... {len(entries) - max_entries} more process update(s) omitted.")
+
+    process_block = "\n".join(lines)
+    return f"{notes.rstrip()}\n\n{process_block}".strip()
 
 
 def latest_user_prompt_from_history(payload: dict[str, Any]) -> str:
