@@ -13,7 +13,7 @@ Use this template for Chinese paper-review deliverables. Adapt headings when the
 - 源码/LaTeX：`<path or unavailable>`
 - 开源代码：`<repo url>`, commit `<hash>`
 - 提取文本：`<path>`
-- 图表：列出 Figure/Table 与本地图片路径。
+- 图表：列出 Figure/Table 与本地图片路径；标明截图是否包含完整 caption，边距是否已经裁成窄边界。
 
 ## 1. 论文基本信息
 

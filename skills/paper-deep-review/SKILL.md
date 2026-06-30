@@ -30,7 +30,13 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - If source does not exist, render PDF pages to PNG and crop figures/tables manually. Clearly state that screenshots are PDF crops, not original assets.
    - Use `scripts/extract_pdf_assets.py` for offline PDFs when PyMuPDF is available, or use Poppler tools (`pdftoppm`, `pdftocairo`) when installed.
    - Use `scripts/crop_pdf_figures.py` to batch crop figures from rendered page PNGs using a JSON crop spec, then generate a contact sheet for visual review.
-   - For every figure embedded in Markdown, verify it includes the intended plot/table and full caption/title, and excludes unrelated surrounding text.
+   - Screenshot/crop requirements are strict:
+     - Every Markdown-embedded screenshot of a Figure/Table must include its full caption. A crop without the visible `Figure`, `Fig.`, or `Table` label and caption text is incomplete and must be recropped.
+     - Keep crop margins narrow: include only the figure/table body, its title/legend/axis labels, and the complete caption. Leave a small readable border, but avoid surrounding paragraphs, headers/footers, page numbers, neighboring figures, or excess whitespace.
+     - Do not crop the caption separately from the visual unless the paper layout makes one combined crop unreadable. If split crops are unavoidable, embed the visual and caption together in adjacent Markdown and label both paths in the figure inventory.
+     - Preserve enough resolution for axis labels, legends, table entries, and caption text to be readable at normal Markdown viewing width. Re-render pages at higher DPI before accepting blurry crops.
+     - Name crops by source and semantic target, for example `fig3_method_caption.png` or `table2_main_results_caption.png`, so the file name signals that the caption is included.
+   - For every figure embedded in Markdown, verify it includes the intended plot/table and full caption/title, has narrow clean boundaries, and excludes unrelated surrounding text.
 
 4. **Read with evidence discipline.**
    - Map every important claim to a paper section, figure, table, appendix, or code path.
@@ -64,7 +70,7 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
 Before finishing:
 
 - Confirm all Markdown image links resolve.
-- Review all crops in a contact sheet or individually for full captions/titles and clean boundaries; fix crops that include the next paragraph or truncate captions.
+- Review all crops in a contact sheet or individually for full captions/titles and narrow clean boundaries; fix crops that include the next paragraph, page chrome, neighboring content, excessive whitespace, or any truncated caption.
 - Confirm every key number in the review maps to a paper section/table/figure or a clearly stated calculation.
 - Confirm code claims include file paths and commit hashes.
 - If tests or extraction tools could not run, state that limitation in the final response.
