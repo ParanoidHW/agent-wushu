@@ -25,6 +25,7 @@ DEFAULT_SIZE = "1024x1024"
 DEFAULT_QUALITY = "medium"
 DEFAULT_OUTPUT_FORMAT = "png"
 DEFAULT_PARTIAL_IMAGES = 2
+DEFAULT_UPLOAD_PURPOSE = "vision"
 MAX_PIXELS = 3840 * 2160
 RETRY_STATUSES = {408, 409, 429, 500, 502, 503, 504}
 
@@ -191,7 +192,18 @@ def build_request(args: argparse.Namespace, api_key: str | None) -> tuple[str, b
     if args.file_id or args.image_url:
         raise OpenRouterImageError("do not mix local --image uploads with --file-id or --image-url")
 
-    body, content_type = encode_multipart(payload, [Path(value) for value in args.image])
+    body, content_type = encode_image_multipart(payload, [Path(value) for value in args.image])
+    headers["Content-Type"] = content_type
+    return url, body, headers
+
+
+def build_upload_request(args: argparse.Namespace, api_key: str | None) -> tuple[str, bytes, dict[str, str]]:
+    url = build_api_url(args.base_url, "/v1/files")
+    headers = {
+        "Authorization": f"Bearer {api_key or '<OPENROUTER_ICU_API_KEY>'}",
+        **parse_header_pairs(args.header),
+    }
+    body, content_type = encode_multipart_form({"purpose": args.purpose}, [("file", args.file)])
     headers["Content-Type"] = content_type
     return url, body, headers
 
@@ -203,7 +215,11 @@ def build_api_url(base_url: str, endpoint: str) -> str:
     return base + endpoint
 
 
-def encode_multipart(fields: dict[str, Any], image_paths: list[Path]) -> tuple[bytes, str]:
+def encode_image_multipart(fields: dict[str, Any], image_paths: list[Path]) -> tuple[bytes, str]:
+    return encode_multipart_form(fields, [("image[]", path) for path in image_paths])
+
+
+def encode_multipart_form(fields: dict[str, Any], files: list[tuple[str, Path]]) -> tuple[bytes, str]:
     boundary = "----openrouter-icu-" + uuid.uuid4().hex
     chunks: list[bytes] = []
 
@@ -217,14 +233,14 @@ def encode_multipart(fields: dict[str, Any], image_paths: list[Path]) -> tuple[b
         chunks.append(text.encode("utf-8"))
         chunks.append(b"\r\n")
 
-    for path in image_paths:
+    for field_name, path in files:
         if not path.is_file():
-            raise OpenRouterImageError(f"image file does not exist: {path}")
+            raise OpenRouterImageError(f"input file does not exist: {path}")
         mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         chunks.append(f"--{boundary}\r\n".encode("utf-8"))
         chunks.append(
             (
-                'Content-Disposition: form-data; name="image[]"; '
+                f'Content-Disposition: form-data; name="{field_name}"; '
                 f'filename="{path.name}"\r\nContent-Type: {mime_type}\r\n\r\n'
             ).encode("utf-8")
         )
@@ -442,7 +458,7 @@ def write_events(data: bytes, path: Path | None) -> None:
     path.write_bytes(data)
 
 
-def dry_run(url: str, body: bytes, headers: dict[str, str], args: argparse.Namespace) -> None:
+def dry_run(url: str, body: bytes, headers: dict[str, str], args: argparse.Namespace, request_info: dict[str, Any] | None = None) -> None:
     safe_headers = dict(headers)
     if "Authorization" in safe_headers:
         safe_headers["Authorization"] = "Bearer <redacted>"
@@ -450,26 +466,34 @@ def dry_run(url: str, body: bytes, headers: dict[str, str], args: argparse.Names
         "method": "POST",
         "url": url,
         "headers": safe_headers,
-        "stream": args.stream,
-        "output": str(args.output),
     }
+    if request_info:
+        request.update(request_info)
     content_type = headers.get("Content-Type", "")
     if content_type.startswith("application/json"):
         request["json"] = json.loads(body.decode("utf-8"))
     else:
         request["multipart_bytes"] = len(body)
-        request["local_images"] = args.image
     print(json.dumps(request, indent=2, ensure_ascii=False))
 
 
 def command_run(args: argparse.Namespace) -> int:
+    if args.command == "upload":
+        return command_upload(args)
+
     api_key = os.environ.get("OPENROUTER_ICU_API_KEY")
     if not api_key and not args.dry_run:
         raise OpenRouterImageError("OPENROUTER_ICU_API_KEY is missing; ask the user for a key before calling the API")
 
     url, body, headers = build_request(args, api_key)
     if args.dry_run:
-        dry_run(url, body, headers, args)
+        request_info = {
+            "stream": args.stream,
+            "output": str(args.output),
+        }
+        if args.command == "edit" and args.image:
+            request_info["local_images"] = args.image
+        dry_run(url, body, headers, args, request_info)
         return 0
 
     status, response_headers, response_body = send_request(url, body, headers, args.timeout, args.retries)
@@ -495,6 +519,57 @@ def command_run(args: argparse.Namespace) -> int:
     written = write_images(images, output_targets)
     print_result(status, request_id, written, [], "")
     return 0
+
+
+def command_upload(args: argparse.Namespace) -> int:
+    api_key = os.environ.get("OPENROUTER_ICU_API_KEY")
+    if not api_key and not args.dry_run:
+        raise OpenRouterImageError("OPENROUTER_ICU_API_KEY is missing; ask the user for a key before calling the API")
+
+    url, body, headers = build_upload_request(args, api_key)
+    if args.dry_run:
+        dry_run(
+            url,
+            body,
+            headers,
+            args,
+            {
+                "file": str(args.file),
+                "purpose": args.purpose,
+            },
+        )
+        return 0
+
+    status, response_headers, response_body = send_request(url, body, headers, args.timeout, args.retries)
+    result = parse_upload_response(response_body)
+    request_id = response_headers.get("x-request-id") or response_headers.get("X-Request-Id") or "<missing>"
+    result["http_status"] = status
+    result["x_request_id"] = request_id
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+    return 0
+
+
+def parse_upload_response(data: bytes) -> dict[str, Any]:
+    try:
+        response = json.loads(decode_text(data))
+    except json.JSONDecodeError as exc:
+        raise OpenRouterImageError("file upload response is not JSON") from exc
+
+    if isinstance(response, dict) and response.get("error"):
+        raise OpenRouterImageError("OpenRouter ICU file upload error:\n" + json.dumps(response, indent=2, ensure_ascii=False))
+    if not isinstance(response, dict):
+        raise OpenRouterImageError("file upload response is not a JSON object")
+
+    file_id = response.get("id") or response.get("file_id")
+    if not isinstance(file_id, str) or not file_id:
+        raise OpenRouterImageError(
+            "file upload response did not include an id:\n"
+            + json.dumps(response, indent=2, ensure_ascii=False)[:4000]
+        )
+
+    result = dict(response)
+    result["file_id"] = file_id
+    return result
 
 
 def print_result(status: int, request_id: str, written: list[Path], partials: list[Path], last_event_type: str) -> None:
@@ -573,6 +648,24 @@ def build_parser() -> argparse.ArgumentParser:
     edit.add_argument("--file-id", "--file_id", action="append", default=[], help="OpenRouter/OpenAI file ID image reference.")
     edit.add_argument("--image-url", "--image_url", action="append", default=[], help="Remote image URL reference.")
 
+    upload = subparsers.add_parser("upload", help="Upload a file and print the returned file_id.")
+    upload.add_argument("file", type=Path, help="Local file to upload.")
+    upload.add_argument(
+        "--purpose",
+        default=DEFAULT_UPLOAD_PURPOSE,
+        help="Files API purpose. Defaults to vision for image inputs.",
+    )
+    upload.add_argument(
+        "--base-url",
+        "--base_url",
+        default=BASE_URL,
+        help="OpenRouter ICU root URL or /v1 API base URL.",
+    )
+    upload.add_argument("--timeout", default=300, type=positive_int)
+    upload.add_argument("--retries", default=2, type=int)
+    upload.add_argument("--header", action="append", help="Additional HTTP header as NAME:VALUE.")
+    upload.add_argument("--dry-run", action="store_true", help="Print the request shape without contacting the API.")
+
     return parser
 
 
@@ -582,7 +675,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.retries < 0:
         parser.error("--retries must be non-negative")
-    if args.save_partials and not args.stream:
+    if getattr(args, "save_partials", False) and not getattr(args, "stream", False):
         parser.error("--save-partials requires streaming; remove --no-stream")
     try:
         return command_run(args)

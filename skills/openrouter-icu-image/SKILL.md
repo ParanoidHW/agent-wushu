@@ -12,6 +12,7 @@ description: Generate or edit images synchronously through OpenRouter ICU's Open
 3. Choose the endpoint:
    - Text-to-image: `/v1/images/generations`.
    - Local image editing or multi-image references: `/v1/images/edits`.
+   - Reusable server-side file references: upload with `/v1/files`, then pass the returned `file_id` to `/v1/images/edits`.
 4. Set explicit request parameters. Defaults are `model=gpt-image-2`, `size=1024x1024`, `quality=medium`, `output_format=png`, `stream=true`, and `partial_images=2`.
 5. Run image generation synchronously. Do not background the command, detach the process, start a separate hidden terminal, or use fire-and-forget automation.
 6. Wait until the CLI process exits and the final image file is written before continuing with dependent work or sending a final response. If a terminal tool returns a live session ID, poll that session until it exits; do not start unrelated work while image generation is still running.
@@ -63,12 +64,36 @@ python3 scripts/openrouter_icu_image.py edit \
   --output output/openrouter-icu/product.png
 ```
 
+```bash
+python3 scripts/openrouter_icu_image.py edit \
+  --image-url https://example.com/input.png \
+  --prompt "Create a clean product photo using this reference image" \
+  --output output/openrouter-icu/from-url.png
+```
+
+```bash
+python3 scripts/openrouter_icu_image.py upload input.png --purpose vision
+
+python3 scripts/openrouter_icu_image.py edit \
+  --file-id file_abc123 \
+  --prompt "Change the background while preserving the subject" \
+  --output output/openrouter-icu/from-file-id.png
+```
+
 Use `--dry-run` to inspect the request shape without contacting the API.
+
+For image inputs, prefer the simplest accepted form:
+
+- Use `edit --image path.png` for local image files. This sends multipart `image[]` directly to `/v1/images/edits`; no separate upload is needed.
+- Use `edit --image-url https://...` for remote images that the API can fetch.
+- Use `upload path.png --purpose vision` when you need to reuse a file, pass a provider-side file reference, or avoid resending the same input. Use the returned `file_id` with `edit --file-id`.
+- Do not put local file paths or URLs inside the image prompt. Put them in `--image`, `--image-url`, or `--file-id`.
 
 CLI flags use hyphenated names while the API payload uses snake_case. The script also accepts the snake_case aliases for API-shaped options:
 
 | CLI flag | API payload field |
 |---|---|
+| `upload FILE --purpose vision` | `POST /v1/files` multipart `file` + `purpose` |
 | `--output-format` / `--output_format` | `output_format` |
 | `--output-compression` / `--output_compression` | `output_compression` |
 | `--stream`, `--stream true`, `--stream false` | `stream` |
