@@ -1,4 +1,4 @@
 interface:
   display_name: "OpenRouter ICU Image"
-  short_description: "Generate images, edit visual references, and use uploaded documents with OpenRouter ICU"
-  default_prompt: "Use $openrouter-icu-image to generate an image, edit visual references, or create an image from an uploaded document through OpenRouter ICU."
+  short_description: "Generate images, candidates, edits, and uploaded-document visuals with OpenRouter ICU"
+  default_prompt: "Use $openrouter-icu-image to generate image candidates, edit visual references, or create an image from an uploaded document through OpenRouter ICU."

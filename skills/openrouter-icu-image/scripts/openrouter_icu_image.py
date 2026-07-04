@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import json
 import mimetypes
 import os
@@ -21,6 +22,7 @@ from typing import Any
 
 BASE_URL = "https://openrouter.icu"
 DEFAULT_MODEL = "gpt-image-2"
+DEFAULT_RESPONSES_MODEL = "gpt-5.5-medium"
 DEFAULT_SIZE = "1024x1024"
 DEFAULT_QUALITY = "high"
 DEFAULT_OUTPUT_FORMAT = "png"
@@ -208,6 +210,57 @@ def build_upload_request(args: argparse.Namespace, api_key: str | None) -> tuple
     return url, body, headers
 
 
+def build_responses_doc_request(args: argparse.Namespace, api_key: str | None) -> tuple[str, bytes, dict[str, str]]:
+    url = build_api_url(args.base_url, "/v1/responses")
+    headers = {
+        "Authorization": f"Bearer {api_key or '<OPENROUTER_ICU_API_KEY>'}",
+        "Content-Type": "application/json",
+        "Accept": "text/event-stream" if args.stream else "application/json",
+        **parse_header_pairs(args.header),
+    }
+
+    content: list[dict[str, str]] = [{"type": "input_text", "text": args.prompt}]
+    for raw_path in args.input_file:
+        path = Path(raw_path)
+        if not path.is_file():
+            raise OpenRouterImageError(f"input file does not exist: {path}")
+        mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
+        encoded = base64.b64encode(path.read_bytes()).decode("ascii")
+        content.append(
+            {
+                "type": "input_file",
+                "filename": path.name,
+                "file_data": f"data:{mime_type};base64,{encoded}",
+            }
+        )
+
+    image_tool: dict[str, Any] = {
+        "type": "image_generation",
+        "size": args.size,
+        "quality": args.quality,
+        "output_format": args.output_format,
+    }
+    if args.n > 1:
+        image_tool["n"] = args.n
+
+    payload: dict[str, Any] = {
+        "model": args.model,
+        "input": [
+            {
+                "role": "user",
+                "content": content,
+            }
+        ],
+        "tools": [image_tool],
+        "stream": args.stream,
+        "store": args.store,
+    }
+    if args.user is not None:
+        payload["user"] = args.user
+
+    return url, json.dumps(payload, ensure_ascii=False).encode("utf-8"), headers
+
+
 def build_api_url(base_url: str, endpoint: str) -> str:
     base = base_url.rstrip("/")
     if base.endswith("/v1") and endpoint.startswith("/v1/"):
@@ -354,6 +407,101 @@ def event_image_payload(event: dict[str, Any]) -> str | None:
     return None
 
 
+def is_image_payload(value: str) -> bool:
+    if value.startswith("data:image/"):
+        return True
+    return len(value) > 1000 and value.startswith(("iVBORw0KGgo", "/9j/", "UklGR"))
+
+
+def strip_data_url(payload: str) -> str:
+    if payload.startswith("data:image/"):
+        return payload.split(",", 1)[1]
+    return payload
+
+
+def iter_response_image_payloads(value: Any) -> list[tuple[str, str]]:
+    found: list[tuple[str, str]] = []
+
+    def visit(node: Any, key_name: str = "") -> None:
+        if isinstance(node, dict):
+            for key, child in node.items():
+                image_key = key in {
+                    "result",
+                    "b64_json",
+                    "image_b64",
+                    "image_base64",
+                    "partial_image_b64",
+                }
+                if isinstance(child, str) and (image_key or is_image_payload(child)) and is_image_payload(child):
+                    found.append((key, child))
+                else:
+                    visit(child, key)
+        elif isinstance(node, list):
+            for child in node:
+                visit(child, key_name)
+
+    visit(value)
+    return found
+
+
+def extract_responses_stream_images(events: list[dict[str, Any]]) -> tuple[list[str], list[str], str]:
+    ensure_no_error_events(events)
+    finals: list[str] = []
+    partials: list[str] = []
+    seen_finals: set[str] = set()
+    seen_partials: set[str] = set()
+    last_type = ""
+
+    def add_unique(target: list[str], seen: set[str], payload: str) -> None:
+        normalized = strip_data_url(payload)
+        digest = hashlib.sha256(normalized.encode("ascii", errors="ignore")).hexdigest()
+        if digest in seen:
+            return
+        seen.add(digest)
+        target.append(normalized)
+
+    for event in events:
+        kind = event_type(event)
+        if kind:
+            last_type = kind
+        for key, payload in iter_response_image_payloads(event):
+            if key == "partial_image_b64" or "partial" in kind:
+                add_unique(partials, seen_partials, payload)
+            else:
+                add_unique(finals, seen_finals, payload)
+
+    return finals, partials, last_type
+
+
+def extract_responses_json_images(data: bytes) -> list[str]:
+    try:
+        response = json.loads(decode_text(data))
+    except json.JSONDecodeError as exc:
+        raise OpenRouterImageError("responses response is not JSON") from exc
+
+    if isinstance(response, dict) and response.get("error"):
+        raise OpenRouterImageError("OpenRouter ICU responses error:\n" + json.dumps(response, indent=2, ensure_ascii=False))
+
+    images: list[str] = []
+    seen: set[str] = set()
+    for key, payload in iter_response_image_payloads(response):
+        if key == "partial_image_b64":
+            continue
+        normalized = strip_data_url(payload)
+        digest = hashlib.sha256(normalized.encode("ascii", errors="ignore")).hexdigest()
+        if digest in seen:
+            continue
+        seen.add(digest)
+        images.append(normalized)
+
+    if not images:
+        raise OpenRouterImageError(
+            "no image payload found in responses JSON:\n"
+            + json.dumps(response, indent=2, ensure_ascii=False)[:4000]
+        )
+    return images
+
+
 def event_type(event: dict[str, Any]) -> str:
     value = event.get("type")
     return value if isinstance(value, str) else ""
@@ -480,6 +628,8 @@ def dry_run(url: str, body: bytes, headers: dict[str, str], args: argparse.Names
 def command_run(args: argparse.Namespace) -> int:
     if args.command == "upload":
         return command_upload(args)
+    if args.command == "responses-doc":
+        return command_responses_doc(args)
 
     api_key = os.environ.get("OPENROUTER_ICU_API_KEY")
     if not api_key and not args.dry_run:
@@ -516,6 +666,52 @@ def command_run(args: argparse.Namespace) -> int:
         return 0
 
     images = extract_json_images(response_body)
+    written = write_images(images, output_targets)
+    print_result(status, request_id, written, [], "")
+    return 0
+
+
+def command_responses_doc(args: argparse.Namespace) -> int:
+    api_key = os.environ.get("OPENROUTER_ICU_API_KEY")
+    if not api_key and not args.dry_run:
+        raise OpenRouterImageError("OPENROUTER_ICU_API_KEY is missing; ask the user for a key before calling the API")
+
+    url, body, headers = build_responses_doc_request(args, api_key)
+    if args.dry_run:
+        dry_run(
+            url,
+            body,
+            headers,
+            args,
+            {
+                "stream": args.stream,
+                "output": str(args.output),
+                "input_files": [str(path) for path in args.input_file],
+                "responses_document_input": True,
+            },
+        )
+        return 0
+
+    status, response_headers, response_body = send_request(url, body, headers, args.timeout, args.retries)
+    write_events(response_body, args.events_output)
+
+    request_id = response_headers.get("x-request-id") or response_headers.get("X-Request-Id") or "<missing>"
+    output_targets = output_paths(args.output, args.n, args.output_format)
+
+    if args.stream:
+        events = parse_sse(response_body)
+        finals, partials, last_type = extract_responses_stream_images(events)
+        if not finals:
+            raise OpenRouterImageError(
+                "no final image payload found in responses SSE stream; "
+                f"last event type: {last_type or '<missing>'}; partial payloads: {len(partials)}"
+            )
+        written = write_images(finals, output_targets)
+        partial_paths = write_partials(partials, args.output, args.output_format) if args.save_partials else []
+        print_result(status, request_id, written, partial_paths, last_type)
+        return 0
+
+    images = extract_responses_json_images(response_body)
     written = write_images(images, output_targets)
     print_result(status, request_id, written, [], "")
     return 0
@@ -635,6 +831,25 @@ def add_common_arguments(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_responses_doc_arguments(parser: argparse.ArgumentParser) -> None:
+    add_common_arguments(parser)
+    parser.set_defaults(model=DEFAULT_RESPONSES_MODEL)
+    parser.add_argument(
+        "--input-file",
+        "--input_file",
+        action="append",
+        required=True,
+        help="Non-image document input such as Markdown, TXT, CSV, or PDF. Repeat for multiple files.",
+    )
+    parser.add_argument(
+        "--store",
+        nargs="?",
+        action=BooleanOptionalValueAction,
+        help="Store the Responses API result. Defaults to false.",
+    )
+    parser.set_defaults(store=False)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -665,6 +880,12 @@ def build_parser() -> argparse.ArgumentParser:
     upload.add_argument("--retries", default=2, type=int)
     upload.add_argument("--header", action="append", help="Additional HTTP header as NAME:VALUE.")
     upload.add_argument("--dry-run", action="store_true", help="Print the request shape without contacting the API.")
+
+    responses_doc = subparsers.add_parser(
+        "responses-doc",
+        help="Generate image(s) from uploaded non-image document inputs through /v1/responses.",
+    )
+    add_responses_doc_arguments(responses_doc)
 
     return parser
 

@@ -1,6 +1,6 @@
 ---
 name: openrouter-icu-image
-description: Generate or edit images synchronously through OpenRouter ICU's OpenAI-compatible image API. Use when the user asks Codex to create an image, produce visual assets, transform or edit local/reference images, upload non-image documents such as Markdown/PDF/text as image-generation context, use OpenRouter ICU, call https://openrouter.icu/v1/images/generations, call https://openrouter.icu/v1/images/edits, call https://openrouter.icu/v1/responses with input_file plus image_generation, parse streaming image responses, or save generated image files from OpenRouter ICU. Always run foreground/blocking and wait for final image files before continuing or replying.
+description: Generate or edit one or more images synchronously through OpenRouter ICU's OpenAI-compatible image API. Use when the user asks Codex to create an image, generate multiple visual candidates, produce visual assets, transform or edit local/reference images, upload non-image documents such as Markdown/PDF/text as image-generation context, use OpenRouter ICU, call https://openrouter.icu/v1/images/generations, call https://openrouter.icu/v1/images/edits, call https://openrouter.icu/v1/responses with input_file plus image_generation, parse streaming image responses, or save generated image files from OpenRouter ICU. Always run foreground/blocking and wait for final image files before continuing or replying.
 ---
 
 # OpenRouter ICU Image
@@ -14,7 +14,7 @@ description: Generate or edit images synchronously through OpenRouter ICU's Open
    - Local image editing or multi-image visual references: `/v1/images/edits`. Inputs must be image MIME types.
    - Non-image document inputs such as Markdown, plain text, CSV, or PDFs: `/v1/responses` with an `input_file` content part and an `image_generation` tool. This is the verified file-input path for "use this document as input" requests.
    - Do not rely on `/v1/files` for image-generation document inputs on OpenRouter ICU unless it is re-verified in the current session; it has returned `404` in practice. Do not send Markdown/text to `/v1/images/edits` as `image[]`; it is rejected as unsupported non-image MIME.
-4. Set explicit request parameters. Defaults are `model=gpt-image-2`, `size=1024x1024`, `quality=high`, `output_format=png`, `stream=true`, and `partial_images=2`.
+4. Set explicit request parameters. Defaults are `model=gpt-image-2`, `size=1024x1024`, `quality=high`, `output_format=png`, `stream=true`, and `partial_images=2`. The `/v1/responses` document-input CLI defaults to `model=gpt-5.5-medium`.
 5. Run image generation synchronously. Do not background the command, detach the process, start a separate hidden terminal, or use fire-and-forget automation.
 6. Wait until the CLI process exits and the final image file is written before continuing with dependent work or sending a final response. If a terminal tool returns a live session ID, poll that session until it exits; do not start unrelated work while image generation is still running.
 7. Save outputs under a user-requested path when provided; otherwise use a clear local output path such as `output/openrouter-icu/<slug>.png`.
@@ -28,7 +28,7 @@ Use this request shape:
 
 - `input[].content[]` includes a concise visual instruction as `{"type":"input_text","text":"..."}`.
 - The local document is base64 encoded into a data URL and passed as `{"type":"input_file","filename":"source.md","file_data":"data:text/markdown;base64,..."}`.
-- `tools` includes `{"type":"image_generation","size":"1024x1024","quality":"high","output_format":"png"}`.
+- `tools` includes `{"type":"image_generation","size":"1024x1024","quality":"high","output_format":"png"}`. For multiple candidates, add `"n": 2` or higher in the same tool object.
 - Set `stream: true`, read SSE until `response.completed`, then decode the final image from `response.output[*].result` or an `image_generation_call` completed item. Partial images can appear as `partial_image_b64`.
 
 Keep the prompt focused on the visual output. Do not paste the document contents into the prompt when the user asked for file upload; the document belongs in `input_file`.
@@ -38,7 +38,7 @@ Minimal Python pattern:
 ```python
 file_data = "data:text/markdown;base64," + base64.b64encode(path.read_bytes()).decode("ascii")
 payload = {
-    "model": "gpt-5.4-mini",
+    "model": "gpt-5.5-medium",
     "input": [{
         "role": "user",
         "content": [
@@ -46,7 +46,7 @@ payload = {
             {"type": "input_file", "filename": path.name, "file_data": file_data},
         ],
     }],
-    "tools": [{"type": "image_generation", "size": "1024x1024", "quality": "high", "output_format": "png"}],
+    "tools": [{"type": "image_generation", "size": "1024x1024", "quality": "high", "output_format": "png", "n": 3}],
     "stream": True,
     "store": False,
 }
@@ -106,6 +106,18 @@ python3 scripts/openrouter_icu_image.py edit \
   --output output/openrouter-icu/from-url.png
 ```
 
+For non-image document inputs, use `responses-doc`. This sends the file as an uploaded `input_file` content part; it does not paste the document into the prompt. Use `--n` to request multiple candidates in one request. With `--n 3` and `--output output/openrouter-icu/report-candidate.png`, outputs are written as `report-candidate-1.png`, `report-candidate-2.png`, and `report-candidate-3.png`.
+
+```bash
+python3 scripts/openrouter_icu_image.py responses-doc \
+  --input-file report.md \
+  --prompt "Create three distinct clean technical infographic candidates from the uploaded document" \
+  --n 3 \
+  --size 1792x1008 \
+  --quality high \
+  --output output/openrouter-icu/report-candidate.png
+```
+
 Only after re-verifying that `/v1/files` is available for the current OpenRouter ICU account, reusable server-side image references may use:
 
 ```bash
@@ -140,6 +152,8 @@ CLI flags use hyphenated names while the API payload uses snake_case. The script
 | `--file-id` / `--file_id` | `images[].file_id` |
 | `--image-url` / `--image_url` | `images[].image_url` |
 | `--base-url` / `--base_url` | request base; accepts `https://openrouter.icu` or `https://openrouter.icu/v1` |
+| `responses-doc --input-file FILE` | `/v1/responses` `input_file.file_data` document upload |
+| `--n 3` | request 3 final images; output paths are numbered when count is greater than 1 |
 
 ## Parameter Rules
 
