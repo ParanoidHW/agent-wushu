@@ -6,27 +6,37 @@
   <title>Interaction Record Viewer</title>
   <style>
     :root {
-      color-scheme: light;
-      --bg: #f6f7f9;
-      --panel: #ffffff;
-      --text: #1c2430;
-      --muted: #667085;
-      --line: #d8dee8;
-      --user: #e9f4ff;
-      --agent: #eef8f1;
-      --notes: #fff7df;
-      --accent: #1b6fd8;
-      --accent-strong: #155bb4;
-      --shadow: 0 12px 30px rgba(18, 28, 45, 0.08);
+      color-scheme: dark;
+      --bg: #090d14;
+      --panel: #101722;
+      --text: #d8e2ee;
+      --muted: #8795a7;
+      --line: #263343;
+      --line-strong: #35465a;
+      --user: #102a43;
+      --agent: #123226;
+      --notes: #382f16;
+      --accent: #45d6c8;
+      --accent-strong: #7df5ea;
+      --shadow: none;
+      --page-width: 80%;
     }
 
     * {
       box-sizing: border-box;
     }
 
+    ::selection {
+      background: rgba(69, 214, 200, 0.28);
+    }
+
     body {
       margin: 0;
-      background: var(--bg);
+      background:
+        linear-gradient(rgba(69, 214, 200, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(69, 214, 200, 0.03) 1px, transparent 1px),
+        var(--bg);
+      background-size: 28px 28px;
       color: var(--text);
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.55;
@@ -34,11 +44,15 @@
 
     header {
       border-bottom: 1px solid var(--line);
-      background: var(--panel);
+      background: rgba(16, 23, 34, 0.94);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .wrap {
-      width: min(1120px, calc(100% - 32px));
+      width: min(var(--page-width), calc(100% - 32px));
       margin: 0 auto;
     }
 
@@ -56,12 +70,17 @@
       font-size: 22px;
       line-height: 1.2;
       letter-spacing: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     .subtitle {
       margin: 4px 0 0;
       color: var(--muted);
       font-size: 14px;
+    }
+
+    a {
+      color: var(--accent-strong);
     }
 
     .actions {
@@ -78,9 +97,9 @@
       align-items: center;
       min-height: 40px;
       border: 1px solid var(--accent);
-      border-radius: 8px;
-      background: var(--accent);
-      color: #fff;
+      border-radius: 4px;
+      background: rgba(69, 214, 200, 0.12);
+      color: var(--accent-strong);
       font-weight: 650;
       padding: 0 14px;
       cursor: pointer;
@@ -88,7 +107,7 @@
     }
 
     .file-input:hover {
-      background: var(--accent-strong);
+      background: rgba(69, 214, 200, 0.2);
       border-color: var(--accent-strong);
     }
 
@@ -102,8 +121,8 @@
     button {
       min-height: 40px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
+      border-radius: 4px;
+      background: #0d131c;
       color: var(--text);
       font: inherit;
       font-weight: 620;
@@ -112,24 +131,77 @@
     }
 
     button:hover {
-      border-color: #aab4c3;
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    .toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #0d131c;
+      color: var(--text);
+      font-weight: 620;
+      padding: 0 12px;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .toggle input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--accent);
     }
 
     main {
       padding: 24px 0 42px;
     }
 
+    .drop-overlay {
+      position: fixed;
+      inset: 18px;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      border: 2px dashed var(--accent);
+      border-radius: 6px;
+      background: rgba(9, 13, 20, 0.9);
+      color: var(--accent-strong);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-weight: 760;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.12s ease;
+    }
+
+    body.drop-active .drop-overlay {
+      opacity: 1;
+    }
+
     .notice {
       margin-bottom: 18px;
       padding: 14px 16px;
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 4px;
       background: var(--panel);
       color: var(--muted);
     }
 
     .notice strong {
       color: var(--text);
+    }
+
+    .notice code {
+      color: var(--accent-strong);
     }
 
     .meta {
@@ -142,8 +214,8 @@
     .meta-item {
       min-width: 0;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: var(--panel);
+      border-radius: 4px;
+      background: rgba(16, 23, 34, 0.86);
       padding: 10px 12px;
     }
 
@@ -152,6 +224,7 @@
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     .meta-value {
@@ -168,6 +241,7 @@
       margin: 12px 0 16px;
       color: var(--muted);
       font-size: 14px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     .turn-list {
@@ -177,10 +251,14 @@
 
     details.turn {
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 4px;
       background: var(--panel);
       box-shadow: var(--shadow);
       overflow: hidden;
+    }
+
+    details.turn[open] {
+      border-color: var(--line-strong);
     }
 
     details.turn summary {
@@ -192,6 +270,7 @@
       cursor: pointer;
       list-style: none;
       min-height: 58px;
+      background: linear-gradient(90deg, rgba(69, 214, 200, 0.08), transparent 42%);
     }
 
     details.turn summary::-webkit-details-marker {
@@ -205,7 +284,7 @@
       display: inline-grid;
       place-items: center;
       color: var(--accent);
-      border: 1px solid #c7daf5;
+      border: 1px solid var(--line-strong);
       font-size: 14px;
       transition: transform 0.15s ease;
     }
@@ -218,12 +297,14 @@
       min-width: 0;
       font-weight: 760;
       overflow-wrap: anywhere;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     .turn-count {
       color: var(--muted);
       font-size: 13px;
       white-space: nowrap;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     .turn-body {
@@ -235,9 +316,9 @@
 
     .section {
       border: 1px solid var(--line);
-      border-radius: 8px;
+      border-radius: 4px;
       overflow: hidden;
-      background: #fff;
+      background: #0d131c;
     }
 
     .section h3 {
@@ -246,24 +327,29 @@
       font-size: 14px;
       letter-spacing: 0;
       border-bottom: 1px solid var(--line);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
     .section.user h3 {
       background: var(--user);
+      color: #a8d8ff;
     }
 
     .section.agent h3 {
       background: var(--agent);
+      color: #a8f0c8;
     }
 
     .section.notes h3,
     .section.tags h3 {
       background: var(--notes);
+      color: #f3d38a;
     }
 
     .content {
       padding: 12px;
       overflow-wrap: anywhere;
+      background: rgba(9, 13, 20, 0.34);
     }
 
     .content > :first-child {
@@ -278,9 +364,22 @@
       max-width: 100%;
       overflow: auto;
       padding: 12px;
-      border-radius: 8px;
-      background: #101828;
-      color: #f2f4f7;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #05080d;
+      color: #d8e2ee;
+    }
+
+    pre::-webkit-scrollbar,
+    .mermaid::-webkit-scrollbar,
+    table::-webkit-scrollbar {
+      height: 10px;
+    }
+
+    pre::-webkit-scrollbar-thumb,
+    .mermaid::-webkit-scrollbar-thumb,
+    table::-webkit-scrollbar-thumb {
+      background: var(--line-strong);
     }
 
     code {
@@ -293,8 +392,8 @@
       overflow-x: auto;
       padding: 12px;
       border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fbfcfe;
+      border-radius: 4px;
+      background: #0d131c;
       text-align: center;
     }
 
@@ -314,15 +413,16 @@
 
     :not(pre) > code {
       padding: 0.1em 0.25em;
-      border-radius: 4px;
-      background: #eef2f6;
+      border-radius: 3px;
+      background: #172232;
+      color: var(--accent-strong);
     }
 
     blockquote {
       margin: 0;
       padding: 0 0 0 12px;
-      border-left: 3px solid #b5c3d8;
-      color: #4b5563;
+      border-left: 3px solid var(--accent);
+      color: #aab8c8;
     }
 
     table {
@@ -340,24 +440,34 @@
       vertical-align: top;
     }
 
+    th {
+      background: #121c29;
+      color: var(--accent-strong);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    td {
+      background: rgba(13, 19, 28, 0.72);
+    }
+
     .empty {
       padding: 32px 20px;
-      border: 1px dashed #b9c3d2;
-      border-radius: 8px;
+      border: 1px dashed var(--line-strong);
+      border-radius: 4px;
       text-align: center;
       color: var(--muted);
-      background: rgba(255, 255, 255, 0.6);
+      background: rgba(16, 23, 34, 0.66);
     }
 
     .error {
-      border-color: #f2a6a6;
-      background: #fff1f1;
-      color: #8a1f1f;
+      border-color: rgba(255, 107, 122, 0.7);
+      background: rgba(255, 107, 122, 0.08);
+      color: #ffc2c8;
     }
 
     @media (max-width: 720px) {
       .wrap {
-        width: min(100% - 20px, 1120px);
+        width: calc(100% - 20px);
       }
 
       .topbar {
@@ -425,19 +535,28 @@
         <p class="subtitle" id="pageSubtitle">导入符合 spec 的 Markdown 文件，按轮次折叠查看用户和 Agent 的交互。</p>
       </div>
       <div class="actions">
+        <button id="openFileHandle" type="button">打开并记住</button>
         <label class="file-input">
           导入 Markdown
           <input id="fileInput" type="file" accept=".md,.markdown,text/markdown,text/plain">
         </label>
+        <button id="restoreLast" type="button" hidden>恢复上次文件</button>
+        <label class="toggle" title="文件内容变化后自动重新渲染">
+          <input id="autoRefresh" type="checkbox" checked>
+          自动刷新
+        </label>
+        <button id="refreshNow" type="button" disabled>刷新</button>
         <button id="expandAll" type="button">全部展开</button>
         <button id="collapseAll" type="button">全部折叠</button>
       </div>
     </div>
   </header>
 
+  <div id="dropOverlay" class="drop-overlay">拖入 Markdown 文件以加载</div>
+
   <main class="wrap">
     <section id="message" class="notice">
-      <strong>等待导入。</strong> 请选择按 <code>interaction-record-spec.md</code> 编写的 Markdown 交互记录。
+      <strong>等待导入。</strong> 请选择或拖入按 <code>interaction-record-spec.md</code> 编写的 Markdown 交互记录。
     </section>
     <section id="meta" class="meta" hidden></section>
     <div class="toolbar">
@@ -458,21 +577,372 @@
     const fileNameEl = document.querySelector("#fileName");
     const pageTitle = document.querySelector("#pageTitle");
     const pageSubtitle = document.querySelector("#pageSubtitle");
+    const openFileHandle = document.querySelector("#openFileHandle");
+    const restoreLast = document.querySelector("#restoreLast");
+    const autoRefresh = document.querySelector("#autoRefresh");
+    const refreshNow = document.querySelector("#refreshNow");
     const expandAll = document.querySelector("#expandAll");
     const collapseAll = document.querySelector("#collapseAll");
+    const AUTO_REFRESH_MS = 2000;
+    const DB_NAME = "interaction-record-viewer";
+    const DB_STORE = "file-handles";
+    const DB_KEY = "last-file";
+    let currentSource = null;
+    let refreshTimer = null;
+    let droppedDepth = 0;
+
+    openFileHandle.addEventListener("click", async () => {
+      await openRememberedFile();
+    });
+
+    restoreLast.addEventListener("click", async () => {
+      await restoreLastFile({ requestPermission: true });
+    });
 
     fileInput.addEventListener("change", async (event) => {
       const file = event.target.files && event.target.files[0];
       if (!file) return;
+      await loadFileSource({
+        kind: "snapshot",
+        file,
+        name: file.name,
+        canReadFresh: false,
+        source: "picker"
+      });
+    });
+
+    autoRefresh.addEventListener("change", () => {
+      updateRefreshControls();
+      if (autoRefresh.checked) {
+        startAutoRefresh();
+      } else {
+        stopAutoRefresh();
+      }
+    });
+
+    refreshNow.addEventListener("click", async () => {
+      await refreshCurrentFile({ force: true });
+    });
+
+    window.addEventListener("dragenter", (event) => {
+      if (!hasDraggedFiles(event)) return;
+      event.preventDefault();
+      droppedDepth += 1;
+      document.body.classList.add("drop-active");
+    });
+
+    window.addEventListener("dragover", (event) => {
+      if (!hasDraggedFiles(event)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+    });
+
+    window.addEventListener("dragleave", (event) => {
+      if (!hasDraggedFiles(event)) return;
+      droppedDepth = Math.max(0, droppedDepth - 1);
+      if (droppedDepth === 0) {
+        document.body.classList.remove("drop-active");
+      }
+    });
+
+    window.addEventListener("drop", async (event) => {
+      if (!hasDraggedFiles(event)) return;
+      event.preventDefault();
+      droppedDepth = 0;
+      document.body.classList.remove("drop-active");
+      const source = await getDropSource(event);
+      if (!source) return;
+      await loadFileSource(source);
+    });
+
+    window.addEventListener("beforeunload", () => {
+      stopAutoRefresh();
+    });
+
+    window.addEventListener("load", async () => {
+      await initializePersistentFileControls();
+      renderEnhancements();
+    });
+
+    async function openRememberedFile() {
+      if (!("showOpenFilePicker" in window)) {
+        renderNotice("当前浏览器不支持持久文件句柄。请拖入文件，或使用“导入 Markdown”。");
+        return;
+      }
 
       try {
+        const [handle] = await window.showOpenFilePicker({
+          multiple: false,
+          types: [{
+            description: "Markdown",
+            accept: {
+              "text/markdown": [".md", ".markdown"],
+              "text/plain": [".txt"]
+            }
+          }]
+        });
+        await loadFileSource({
+          kind: "handle",
+          handle,
+          name: handle.name,
+          canReadFresh: true,
+          source: "picker"
+        });
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          renderError(error.message || String(error));
+        }
+      }
+    }
+
+    async function initializePersistentFileControls() {
+      if (!supportsPersistentHandles()) {
+        openFileHandle.disabled = true;
+        openFileHandle.title = "当前浏览器不支持刷新后恢复文件";
+        return;
+      }
+      if (!("showOpenFilePicker" in window)) {
+        openFileHandle.disabled = true;
+        openFileHandle.title = "当前浏览器不支持通过按钮打开并记住文件；可尝试拖入文件";
+      }
+
+      const handle = await loadLastHandle();
+      restoreLast.hidden = !handle;
+      if (!handle) return;
+      await restoreLastFile({ requestPermission: false });
+    }
+
+    async function restoreLastFile({ requestPermission }) {
+      const handle = await loadLastHandle();
+      if (!handle) {
+        restoreLast.hidden = true;
+        return;
+      }
+
+      const permission = await getHandlePermission(handle, requestPermission);
+      if (permission !== "granted") {
+        restoreLast.hidden = false;
+        renderNotice("已找到上次文件。点击“恢复上次文件”授权后，可在浏览器刷新后继续读取最新内容。");
+        return;
+      }
+
+      restoreLast.hidden = true;
+      await loadFileSource({
+        kind: "handle",
+        handle,
+        name: handle.name,
+        canReadFresh: true,
+        source: "restore"
+      });
+    }
+
+    async function loadFileSource(source) {
+      try {
+        const file = await readSourceFile(source);
         const text = await file.text();
         const record = parseInteractionRecord(text);
-        renderRecord(record, file.name);
+        currentSource = {
+          ...source,
+          name: source.name || file.name,
+          stamp: getFileStamp(file)
+        };
+        if (source.kind === "handle") {
+          await rememberHandle(source.handle);
+          restoreLast.hidden = true;
+        }
+        renderRecord(record, file.name, {
+          source: source.source,
+          refreshed: false,
+          timestamp: new Date()
+        });
+        updateRefreshControls();
+        if (autoRefresh.checked) {
+          startAutoRefresh();
+        }
+      } catch (error) {
+        renderError(error.message || String(error));
+        currentSource = null;
+        updateRefreshControls();
+      }
+    }
+
+    async function refreshCurrentFile({ force = false } = {}) {
+      if (!currentSource) return;
+      try {
+        const file = await readSourceFile(currentSource);
+        const nextStamp = getFileStamp(file);
+        if (!force && nextStamp === currentSource.stamp) {
+          updateRefreshStatus("未检测到变化", new Date());
+          return;
+        }
+
+        const text = await file.text();
+        const record = parseInteractionRecord(text);
+        currentSource.stamp = nextStamp;
+        renderRecord(record, currentSource.name, {
+          source: "refresh",
+          refreshed: true,
+          timestamp: new Date()
+        });
       } catch (error) {
         renderError(error.message || String(error));
       }
-    });
+    }
+
+    function startAutoRefresh() {
+      stopAutoRefresh();
+      if (!currentSource || !autoRefresh.checked || !currentSource.canReadFresh) return;
+      refreshTimer = window.setInterval(() => {
+        refreshCurrentFile();
+      }, AUTO_REFRESH_MS);
+    }
+
+    function stopAutoRefresh() {
+      if (refreshTimer) {
+        window.clearInterval(refreshTimer);
+        refreshTimer = null;
+      }
+    }
+
+    function updateRefreshControls() {
+      refreshNow.disabled = !currentSource;
+      if (!currentSource) {
+        stopAutoRefresh();
+        fileNameEl.textContent = "";
+        return;
+      }
+      if (!currentSource.canReadFresh) {
+        stopAutoRefresh();
+      }
+      if (autoRefresh.checked && currentSource.canReadFresh && !refreshTimer) {
+        startAutoRefresh();
+      }
+    }
+
+    function updateRefreshStatus(label, timestamp) {
+      if (!currentSource) return;
+      fileNameEl.textContent = `${currentSource.name} · ${label} ${formatTime(timestamp)}`;
+    }
+
+    async function readSourceFile(source) {
+      if (source.kind === "handle") {
+        return source.handle.getFile();
+      }
+      return source.file;
+    }
+
+    async function getDropSource(event) {
+      const item = Array.from(event.dataTransfer.items || []).find((candidate) => candidate.kind === "file");
+      if (item && typeof item.getAsFileSystemHandle === "function") {
+        try {
+          const handle = await item.getAsFileSystemHandle();
+          if (handle && handle.kind === "file") {
+            return {
+              kind: "handle",
+              handle,
+              name: handle.name,
+              canReadFresh: true,
+              source: "drop"
+            };
+          }
+        } catch (error) {
+          console.warn("FileSystemHandle unavailable:", error);
+        }
+      }
+
+      const file = event.dataTransfer.files && event.dataTransfer.files[0];
+      if (!file) return null;
+      return {
+        kind: "snapshot",
+        file,
+        name: file.name,
+        canReadFresh: false,
+        source: "drop"
+      };
+    }
+
+    function getFileStamp(file) {
+      return `${file.name}:${file.size}:${file.lastModified}`;
+    }
+
+    function hasDraggedFiles(event) {
+      return Array.from(event.dataTransfer?.types || []).includes("Files");
+    }
+
+    function supportsPersistentHandles() {
+      return "indexedDB" in window && ("showOpenFilePicker" in window || "DataTransferItem" in window);
+    }
+
+    async function getHandlePermission(handle, requestPermission) {
+      const options = { mode: "read" };
+      if (typeof handle.queryPermission === "function") {
+        const current = await handle.queryPermission(options);
+        if (current === "granted" || !requestPermission) return current;
+      }
+      if (requestPermission && typeof handle.requestPermission === "function") {
+        return handle.requestPermission(options);
+      }
+      return "prompt";
+    }
+
+    async function rememberHandle(handle) {
+      try {
+        await saveLastHandle(handle);
+      } catch (error) {
+        console.warn("Failed to remember file handle:", error);
+      }
+    }
+
+    async function saveLastHandle(handle) {
+      if (!("indexedDB" in window)) return;
+      const db = await openHandleDb();
+      await idbRequest(db.transaction(DB_STORE, "readwrite").objectStore(DB_STORE).put(handle, DB_KEY));
+      db.close();
+    }
+
+    async function loadLastHandle() {
+      if (!("indexedDB" in window)) return null;
+      try {
+        const db = await openHandleDb();
+        const handle = await idbRequest(db.transaction(DB_STORE, "readonly").objectStore(DB_STORE).get(DB_KEY));
+        db.close();
+        return handle || null;
+      } catch (error) {
+        console.warn("Failed to load remembered file handle:", error);
+        return null;
+      }
+    }
+
+    function openHandleDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = () => {
+          request.result.createObjectStore(DB_STORE);
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function idbRequest(request) {
+      return new Promise((resolve, reject) => {
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function renderNotice(text) {
+      message.className = "notice";
+      message.innerHTML = escapeHtml(text);
+    }
+
+    function formatTime(date) {
+      return date.toLocaleTimeString("zh-CN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      });
+    }
 
     expandAll.addEventListener("click", () => {
       document.querySelectorAll("details.turn").forEach((item) => {
@@ -484,10 +954,6 @@
       document.querySelectorAll("details.turn").forEach((item) => {
         item.open = false;
       });
-    });
-
-    window.addEventListener("load", () => {
-      renderEnhancements();
     });
 
     function parseInteractionRecord(source) {
@@ -625,15 +1091,21 @@
       return turns;
     }
 
-    function renderRecord(record, fileName) {
+    function renderRecord(record, fileName, state = {}) {
       const title = getMetadataValue(record.metadata, "title") || "Interaction Record Viewer";
       const topic = getMetadataValue(record.metadata, "topic");
       pageTitle.textContent = title;
       pageSubtitle.textContent = topic || "导入符合 spec 的 Markdown 文件，按轮次折叠查看用户和 Agent 的交互。";
-      fileNameEl.textContent = fileName;
+
+      const loadedAt = formatTime(state.timestamp || new Date());
+      const refreshText = currentSource?.canReadFresh
+        ? `自动刷新${autoRefresh.checked ? "开启" : "关闭"}`
+        : "快照模式";
+      const actionText = state.refreshed ? "已刷新" : "已加载";
+      fileNameEl.textContent = `${fileName} · ${actionText} ${loadedAt} · ${refreshText}`;
 
       message.className = "notice";
-      message.innerHTML = `<strong>已加载。</strong> ${escapeHtml(String(record.turns.length))} 轮 QA，可单独折叠和展开。`;
+      message.innerHTML = `<strong>${escapeHtml(actionText)}。</strong> ${escapeHtml(String(record.turns.length))} 轮 QA，可单独折叠和展开。`;
       summaryEl.textContent = `${record.turns.length} 轮 QA`;
 
       renderMetadata(record.metadata);
