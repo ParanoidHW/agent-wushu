@@ -13,7 +13,7 @@ description: Generate or edit images synchronously through OpenRouter ICU's Open
    - Text-to-image: `/v1/images/generations`.
    - Local image editing or multi-image references: `/v1/images/edits`.
    - Reusable server-side file references: upload with `/v1/files`, then pass the returned `file_id` to `/v1/images/edits`.
-4. Set explicit request parameters. Defaults are `model=gpt-image-2`, `size=1024x1024`, `quality=medium`, `output_format=png`, `stream=true`, and `partial_images=2`.
+4. Set explicit request parameters. Defaults are `model=gpt-image-2`, `size=1024x1024`, `quality=high`, `output_format=png`, `stream=true`, and `partial_images=2`.
 5. Run image generation synchronously. Do not background the command, detach the process, start a separate hidden terminal, or use fire-and-forget automation.
 6. Wait until the CLI process exits and the final image file is written before continuing with dependent work or sending a final response. If a terminal tool returns a live session ID, poll that session until it exits; do not start unrelated work while image generation is still running.
 7. Save outputs under a user-requested path when provided; otherwise use a clear local output path such as `output/openrouter-icu/<slug>.png`.
@@ -107,7 +107,7 @@ CLI flags use hyphenated names while the API payload uses snake_case. The script
 ## Parameter Rules
 
 - Always set `size`, `quality`, and `output_format` explicitly.
-- Use `quality=medium` unless the user specifies otherwise.
+- Use `quality=high` unless the user specifies otherwise.
 - Use `output_format=png` unless the user asks for `jpeg` or `webp`.
 - Use `stream=true` and `partial_images=2` by default for visible progress and robust final-event handling.
 - When using `--stream false`, `--no-stream`, or `--no_stream`, omit `partial_images` from the API payload.

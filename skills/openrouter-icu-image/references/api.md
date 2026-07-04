@@ -13,7 +13,7 @@
 - 本 skill 的 CLI `--base-url` 同时接受 `https://openrouter.icu` 和 `https://openrouter.icu/v1`。
 - 默认使用 `gpt-image-2`。
 - 默认启用 streaming：`stream: true`，`partial_images: 2`。
-- 用户没有指定质量时使用 `quality: "medium"`。
+- 用户没有指定质量时使用 `quality: "high"`。
 - 用户没有指定输出格式时使用 `output_format: "png"`。
 - 缺少 `OPENROUTER_ICU_API_KEY` 时先询问用户提供 key，不发起请求。
 - 显式设置 `size`、`quality`、`output_format`。
@@ -54,7 +54,7 @@ Change the background to a clean modern office while preserving the person, clot
 {
   "model": "gpt-image-2",
   "size": "1024x1024",
-  "quality": "medium",
+  "quality": "high",
   "output_format": "png",
   "stream": true,
   "partial_images": 2
@@ -166,7 +166,7 @@ curl -sS -N \
     "model": "gpt-image-2",
     "prompt": "A clean product photo of a white ceramic coffee mug on a wooden desk, soft natural light",
     "size": "1024x1024",
-    "quality": "medium",
+    "quality": "high",
     "output_format": "png",
     "stream": true,
     "partial_images": 2
@@ -217,7 +217,7 @@ curl -sS -N \
   -F "image[]=@input.png" \
   -F "prompt=Change the background to a clean modern office while preserving the subject, clothing, pose, and facial features" \
   -F "size=1024x1024" \
-  -F "quality=medium" \
+  -F "quality=high" \
   -F "output_format=png" \
   -F "stream=true" \
   -F "partial_images=2" > "$events"
@@ -247,7 +247,7 @@ curl -sS -N \
   -F "image[]=@background-reference.png" \
   -F "prompt=Create a premium product photo using the product from the first image and the environment style from the second image" \
   -F "size=1024x1024" \
-  -F "quality=medium" \
+  -F "quality=high" \
   -F "output_format=png" \
   -F "stream=true" \
   -F "partial_images=2" > "$events"
@@ -280,7 +280,7 @@ curl -sS -N \
     ],
     "prompt": "Create a premium product photo using these visual references",
     "size": "1024x1024",
-    "quality": "medium",
+    "quality": "high",
     "output_format": "png",
     "stream": true,
     "partial_images": 2
@@ -409,7 +409,7 @@ try {
     model: "gpt-image-2",
     prompt: "A clean product photo of a white ceramic coffee mug on a wooden desk",
     size: "1024x1024",
-    quality: "medium",
+    quality: "high",
     output_format: "png",
     stream: true,
     partial_images: 2,
@@ -453,7 +453,7 @@ try:
         model="gpt-image-2",
         prompt="A clean product photo of a white ceramic coffee mug on a wooden desk",
         size="1024x1024",
-        quality="medium",
+        quality="high",
         output_format="png",
         stream=True,
         partial_images=2,

@@ -22,7 +22,7 @@ from typing import Any
 BASE_URL = "https://openrouter.icu"
 DEFAULT_MODEL = "gpt-image-2"
 DEFAULT_SIZE = "1024x1024"
-DEFAULT_QUALITY = "medium"
+DEFAULT_QUALITY = "high"
 DEFAULT_OUTPUT_FORMAT = "png"
 DEFAULT_PARTIAL_IMAGES = 2
 DEFAULT_UPLOAD_PURPOSE = "vision"
