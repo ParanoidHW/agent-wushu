@@ -22,6 +22,21 @@
       --page-width: 80%;
     }
 
+    body[data-bg="gold"] {
+      color-scheme: light;
+      --bg: #f5edd7;
+      --panel: #fff8e8;
+      --text: #2f2a1f;
+      --muted: #766b56;
+      --line: #d8caa8;
+      --line-strong: #bda977;
+      --user: #f3e5c4;
+      --agent: #ecdfbd;
+      --notes: #ead9ab;
+      --accent: #8d6b1f;
+      --accent-strong: #5d4716;
+    }
+
     * {
       box-sizing: border-box;
     }
@@ -33,8 +48,8 @@
     body {
       margin: 0;
       background:
-        linear-gradient(rgba(69, 214, 200, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(69, 214, 200, 0.03) 1px, transparent 1px),
+        linear-gradient(var(--grid-line, rgba(69, 214, 200, 0.03)) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line, rgba(69, 214, 200, 0.03)) 1px, transparent 1px),
         var(--bg);
       background-size: 28px 28px;
       color: var(--text);
@@ -49,6 +64,14 @@
       position: sticky;
       top: 0;
       z-index: 10;
+    }
+
+    body[data-bg="gold"] {
+      --grid-line: rgba(141, 107, 31, 0.06);
+    }
+
+    body[data-bg="gold"] header {
+      background: rgba(255, 248, 232, 0.94);
     }
 
     .wrap {
@@ -130,6 +153,11 @@
       cursor: pointer;
     }
 
+    body[data-bg="gold"] button,
+    body[data-bg="gold"] .toggle {
+      background: #fbf1d9;
+    }
+
     button:hover {
       border-color: var(--accent);
       color: var(--accent-strong);
@@ -153,6 +181,27 @@
       padding: 0 12px;
       white-space: nowrap;
       cursor: pointer;
+    }
+
+    select {
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: #0d131c;
+      color: var(--text);
+      font: inherit;
+      font-weight: 620;
+      padding: 0 10px;
+      cursor: pointer;
+    }
+
+    select:hover {
+      border-color: var(--accent);
+      color: var(--accent-strong);
+    }
+
+    body[data-bg="gold"] select {
+      background: #fbf1d9;
     }
 
     .toggle input {
@@ -181,6 +230,10 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.12s ease;
+    }
+
+    body[data-bg="gold"] .drop-overlay {
+      background: rgba(245, 237, 215, 0.9);
     }
 
     body.drop-active .drop-overlay {
@@ -217,6 +270,10 @@
       border-radius: 4px;
       background: rgba(16, 23, 34, 0.86);
       padding: 10px 12px;
+    }
+
+    body[data-bg="gold"] .meta-item {
+      background: #fbf0d3;
     }
 
     .meta-key {
@@ -273,6 +330,10 @@
       background: linear-gradient(90deg, rgba(69, 214, 200, 0.08), transparent 42%);
     }
 
+    body[data-bg="gold"] details.turn summary {
+      background: linear-gradient(90deg, rgba(141, 107, 31, 0.09), transparent 42%);
+    }
+
     details.turn summary::-webkit-details-marker {
       display: none;
     }
@@ -321,6 +382,10 @@
       background: #0d131c;
     }
 
+    body[data-bg="gold"] .section {
+      background: #f8ecd0;
+    }
+
     .section h3 {
       margin: 0;
       padding: 8px 12px;
@@ -335,9 +400,17 @@
       color: #a8d8ff;
     }
 
+    body[data-bg="gold"] .section.user h3 {
+      color: #514018;
+    }
+
     .section.agent h3 {
       background: var(--agent);
       color: #a8f0c8;
+    }
+
+    body[data-bg="gold"] .section.agent h3 {
+      color: #443912;
     }
 
     .section.notes h3,
@@ -346,10 +419,19 @@
       color: #f3d38a;
     }
 
+    body[data-bg="gold"] .section.notes h3,
+    body[data-bg="gold"] .section.tags h3 {
+      color: #4a3910;
+    }
+
     .content {
       padding: 12px;
       overflow-wrap: anywhere;
       background: rgba(9, 13, 20, 0.34);
+    }
+
+    body[data-bg="gold"] .content {
+      background: rgba(255, 250, 238, 0.58);
     }
 
     .content > :first-child {
@@ -368,6 +450,11 @@
       border-radius: 4px;
       background: #05080d;
       color: #d8e2ee;
+    }
+
+    body[data-bg="gold"] pre {
+      background: #2a2419;
+      color: #f7ecd1;
     }
 
     pre::-webkit-scrollbar,
@@ -397,6 +484,10 @@
       text-align: center;
     }
 
+    body[data-bg="gold"] .mermaid {
+      background: #fbf0d3;
+    }
+
     .MathJax_Display,
     mjx-container[display="true"] {
       overflow-x: auto;
@@ -418,11 +509,19 @@
       color: var(--accent-strong);
     }
 
+    body[data-bg="gold"] :not(pre) > code {
+      background: #eadbb9;
+    }
+
     blockquote {
       margin: 0;
       padding: 0 0 0 12px;
       border-left: 3px solid var(--accent);
       color: #aab8c8;
+    }
+
+    body[data-bg="gold"] blockquote {
+      color: #62553d;
     }
 
     table {
@@ -446,8 +545,16 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
     }
 
+    body[data-bg="gold"] th {
+      background: #eadbb9;
+    }
+
     td {
       background: rgba(13, 19, 28, 0.72);
+    }
+
+    body[data-bg="gold"] td {
+      background: rgba(255, 250, 238, 0.62);
     }
 
     .empty {
@@ -457,6 +564,10 @@
       text-align: center;
       color: var(--muted);
       background: rgba(16, 23, 34, 0.66);
+    }
+
+    body[data-bg="gold"] .empty {
+      background: rgba(255, 248, 232, 0.62);
     }
 
     .error {
@@ -546,6 +657,10 @@
           自动刷新
         </label>
         <button id="refreshNow" type="button" disabled>刷新</button>
+        <select id="backgroundTheme" aria-label="背景颜色">
+          <option value="dark">深色技术</option>
+          <option value="gold">浅金色</option>
+        </select>
         <button id="expandAll" type="button">全部展开</button>
         <button id="collapseAll" type="button">全部折叠</button>
       </div>
@@ -581,12 +696,14 @@
     const restoreLast = document.querySelector("#restoreLast");
     const autoRefresh = document.querySelector("#autoRefresh");
     const refreshNow = document.querySelector("#refreshNow");
+    const backgroundTheme = document.querySelector("#backgroundTheme");
     const expandAll = document.querySelector("#expandAll");
     const collapseAll = document.querySelector("#collapseAll");
     const AUTO_REFRESH_MS = 2000;
     const DB_NAME = "interaction-record-viewer";
     const DB_STORE = "file-handles";
     const DB_KEY = "last-file";
+    const THEME_KEY = "interaction-viewer-background";
     let currentSource = null;
     let refreshTimer = null;
     let droppedDepth = 0;
@@ -597,6 +714,10 @@
 
     restoreLast.addEventListener("click", async () => {
       await restoreLastFile({ requestPermission: true });
+    });
+
+    backgroundTheme.addEventListener("change", () => {
+      applyBackgroundTheme(backgroundTheme.value, { persist: true });
     });
 
     fileInput.addEventListener("change", async (event) => {
@@ -660,9 +781,24 @@
     });
 
     window.addEventListener("load", async () => {
+      initializeBackgroundTheme();
       await initializePersistentFileControls();
       renderEnhancements();
     });
+
+    function initializeBackgroundTheme() {
+      const saved = localStorage.getItem(THEME_KEY) || "dark";
+      applyBackgroundTheme(saved, { persist: false });
+    }
+
+    function applyBackgroundTheme(value, { persist }) {
+      const theme = value === "gold" ? "gold" : "dark";
+      document.body.dataset.bg = theme;
+      backgroundTheme.value = theme;
+      if (persist) {
+        localStorage.setItem(THEME_KEY, theme);
+      }
+    }
 
     async function openRememberedFile() {
       if (!("showOpenFilePicker" in window)) {
