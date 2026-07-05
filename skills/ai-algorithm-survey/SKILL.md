@@ -22,6 +22,9 @@ ai_algorithm_survey_<field_slug>/
 ├── impact_signals.md
 ├── paper_db.jsonl
 ├── selection.md
+├── figures/
+│   └── generated/
+│       └── survey-trends-infra.png
 ├── papers/
 │   └── <year>_<short-title>/
 │       ├── paper.pdf
@@ -213,10 +216,32 @@ Include:
 - lineage graph or relation table showing which paper extends, replaces, critiques, or benchmarks against which earlier work,
 - comparison table by problem formulation, core mechanism, data/benchmark, metrics, compute/system cost, strengths, and limitations,
 - evolution of assumptions, architectures, training objectives, inference procedures, and evaluation protocols,
+- soft/hardware infrastructure evolution, including data types, bandwidth utilization, CPU/GPU/NPU heterogeneity, kernels/operators, memory, interconnect, serving, and deployment constraints,
 - trend summary: what is converging, what remains unsettled, and where the next likely research directions are,
 - caveats about evidence quality, venue status, and whether claims come from paper text, code inspection, or your own inference.
 
 Do not claim a paper is the "latest" or "state of the art" unless the current search supports that statement and the search date is recorded.
+
+### 8. Generate and Insert a Survey Diagram from the Markdown Document
+
+After `synthesis.md` is complete, use `$openrouter-icu-image` if it is installed and `OPENROUTER_ICU_API_KEY` is available:
+
+- The completed `synthesis.md` must be the reference document for image generation. Use `responses-doc --input-file synthesis.md` so the Markdown is uploaded as document context.
+- Do not generate the diagram from prompt text alone. Do not paste the Markdown into the prompt, summarize the Markdown into the prompt, or use `/v1/images/edits` for Markdown input. If document upload through `responses-doc` cannot be used, skip image generation and state the limitation.
+- Save the PNG under `figures/generated/survey-trends-infra.png`.
+- Use high quality, PNG output, and a 16:9 high-resolution size such as `1792x1008` or `2048x1152` when supported; retry at `1024x1024` if high-resolution fails.
+- Prompt for a shallow-gold background, flat technical infographic style, clean labels, and dense but readable layout.
+- The diagram should mainly show:
+  - the field's algorithm evolution timeline,
+  - major method-family branches and convergence/divergence,
+  - high-value papers as anchors,
+  - software infra dimensions such as data pipeline, data types/numeric formats, training framework, inference/runtime, scheduler, serving stack, kernels/operators, evaluation tooling, and reproducibility tooling,
+  - hardware infra dimensions such as compute, CPU/GPU/NPU heterogeneity, accelerator type, memory capacity, memory bandwidth, effective bandwidth utilization, interconnect, storage, and deployment constraints.
+- Do not invent numeric results or paper claims. Use the synthesis as source material and keep generated visuals separate from evidence tables.
+- Verify the image exists, then insert a relative Markdown link near the top of `synthesis.md` after the scope section.
+- Confirm the inserted image path is relative to `synthesis.md` and does not break Markdown rendering.
+
+If `$openrouter-icu-image` or `OPENROUTER_ICU_API_KEY` is unavailable, skip generation and state the limitation in the final response.
 
 ## Quality Checks
 
@@ -229,9 +254,11 @@ Before finishing:
 - Confirm every selected paper has a clear role in the evolution narrative.
 - Confirm each selected method paper was analyzed with `$paper-deep-review`.
 - Confirm synthesis claims cite selected papers or their `analysis.md` files; label cross-paper inferences explicitly.
+- If `$openrouter-icu-image` was available, confirm `synthesis.md` was passed as the `responses-doc --input-file` reference document, `figures/generated/survey-trends-infra.png` exists, and it is linked from `synthesis.md`; if unavailable or failed, state the limitation.
 - Separate peer-reviewed versions from arXiv-only preprints.
 - State missing access, blocked downloads, paywalls, unavailable code, or extraction failures in the final response.
 
 ## Resources
 
 - `references/synthesis-template.md`: Chinese structure for the final cross-paper survey and trend synthesis.
+- `$openrouter-icu-image`: optional post-processing skill for generating a shallow-gold flat technical infographic from `synthesis.md`.
