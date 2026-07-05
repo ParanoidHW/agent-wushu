@@ -1,6 +1,6 @@
 ---
 name: paper-deep-review
-description: Rigorous academic paper and technical-report review workflow. Use when Codex is asked to deeply read, analyze, summarize, or structure a paper, arXiv article, OpenReview submission, PDF, LaTeX source, technical whitepaper, or model/system report; produce Markdown with figures, formulas, evidence chains, related-work comparison, OpenReview public-review analysis when available, infrastructure analysis, and optional source-code cross-checks.
+description: Rigorous academic paper and technical-report review workflow. Use when Codex is asked to deeply read, analyze, summarize, or structure a paper, arXiv article, OpenReview submission, PDF, LaTeX source, technical whitepaper, or model/system report; produce Markdown with figures, formulas, evidence chains, related-work comparison, OpenReview public-review analysis when available, infrastructure analysis including data types, bandwidth utilization, and CPU/GPU/NPU heterogeneity, and optional source-code cross-checks.
 ---
 
 # Paper Deep Review
@@ -17,6 +17,7 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - `extracted_text/`
    - `figures/page_png/`
    - `figures/crops/`
+   - `figures/generated/` for optional generated analysis diagrams
    - `code/<repo-name>/`
    - `openreview_reviews.md` when public OpenReview reviews/discussion exist
    - `analysis.md`
@@ -77,10 +78,14 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - If reviews are private, missing, blocked, or hidden after acceptance, state that public OpenReview analysis could not be performed.
 
 7. **Analyze infrastructure requirements.**
-   - Include compute, memory, bandwidth, interconnect, scheduler/runtime, and custom-operator implications when relevant.
+   - Include compute, memory, bandwidth, interconnect, scheduler/runtime, custom-operator, data-type, and heterogeneous-hardware implications when relevant.
    - Provide formulas for derived estimates, such as parameter count, activation/cache size, communication volume, expected throughput, or latency.
    - Separate paper-reported numbers from your own calculations.
    - Separate mechanism effects from system effects. For example, distinguish candidate-set quality, verification algorithm, custom kernels, batching, KV-cache layout, CUDA graphing, and scheduler policy. Do not attribute accepted-length gains to an execution kernel unless the paper/code shows that the kernel changes the candidate set or scoring.
+   - Track data types and numeric formats: fp32, fp16, bf16, fp8, int8, int4, binary/ternary, sparse formats, mixed precision, quantization/dequantization, packing/unpacking, accumulation precision, layout transforms, and whether the claimed speed/memory benefit depends on a specific format or hardware support.
+   - Analyze bandwidth utilization, not only raw bandwidth. Estimate effective bandwidth when possible:
+     `effective_bandwidth = bytes_moved / runtime_seconds`; `utilization = effective_bandwidth / peak_bandwidth`. Discuss memory locality, cache reuse, tiling, operator fusion, communication/computation overlap, compression, all-reduce/all-to-all traffic, PCIe/NVLink/RDMA use, and whether kernels are memory-bound or compute-bound.
+   - Analyze CPU/GPU/NPU and accelerator heterogeneity when relevant: host-device transfer, CPU preprocessing/postprocessing, GPU/NPU kernels, accelerator-specific operators, DMA, pinned memory, async copy, pipeline overlap, scheduler placement, fallback paths, and whether the method assumes homogeneous accelerators or mixed CPU/GPU/NPU deployment.
 
 8. **Cross-check code when available.**
    - Inspect configs, model architecture, loss, data pipeline, evaluation, and serving/inference paths.
@@ -108,6 +113,18 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - Include images inline near the discussion they support.
    - End with practical limitations, research inspirations, and unresolved reading questions.
 
+11. **Generate and insert an analysis diagram from the Markdown document when `$openrouter-icu-image` is available.**
+   - After `analysis.md` is complete, use `$openrouter-icu-image` if it is installed and `OPENROUTER_ICU_API_KEY` is available. If the skill or API key is unavailable, do not block the review; add a short note in the final response.
+   - The completed `analysis.md` must be the reference document for image generation. Use the `responses-doc` document-input path with `analysis.md` as `--input-file`.
+   - Do not generate the diagram from prompt text alone. Do not paste the Markdown into the prompt, summarize the Markdown into the prompt, or use `/v1/images/edits` for Markdown input. If document upload through `responses-doc` cannot be used, skip image generation and state the limitation.
+   - Generate a high-quality, high-resolution PNG under `figures/generated/`, for example `figures/generated/algorithm-analysis.png`.
+   - Use `--quality high`, `--output-format png`, and a 16:9 high-resolution size such as `1792x1008` or `2048x1152` when supported. If high-resolution stalls or fails, retry at `1024x1024`.
+   - Prompt for a shallow-gold background and flat technical infographic style. The visual should summarize the paper's algorithm mechanism, evidence chain, key technical claims, ablation support, limitations, and infra implications without inventing numeric results.
+   - Include infra visual cues for data types, bandwidth utilization, and CPU/GPU/NPU heterogeneous execution when they are relevant to the paper.
+   - Verify the image file exists, then insert it near the top of `analysis.md` after the source/figure inventory with a relative Markdown link and caption that labels it as an AI-generated analysis diagram.
+   - Confirm the inserted image path is relative to `analysis.md` and does not break Markdown rendering.
+   - Do not replace paper figures or factual plots with generated art. Keep generated diagrams clearly separate from paper-derived evidence.
+
 ## Quality Checks
 
 Before finishing:
@@ -116,6 +133,7 @@ Before finishing:
 - Review all crops in a contact sheet or individually for full captions/titles and narrow clean boundaries; fix crops that include the next paragraph, page chrome, neighboring content, excessive whitespace, or any truncated caption.
 - Confirm every key number in the review maps to a paper section/table/figure or a clearly stated calculation.
 - Confirm every claimed technical point has been checked for ablation/control/mechanism evidence and unsupported claims are explicitly marked.
+- If `$openrouter-icu-image` was available, confirm `analysis.md` was passed as the `responses-doc --input-file` reference document, the generated analysis diagram exists, and it is linked from `analysis.md`; if unavailable or failed, state the limitation.
 - Confirm code claims include file paths and commit hashes.
 - Confirm the symbol table covers every variable used in key formulas, metrics, and tables.
 - Confirm ambiguous mechanism terms are stage-qualified: drafting vs tree construction vs target verification vs serving/runtime.
@@ -129,3 +147,4 @@ Before finishing:
 - `references/markdown-template.md`: reusable Chinese Markdown structure, including the standard paper review sections and "解读问题/待验证清单".
 - `scripts/extract_pdf_assets.py`: optional helper to extract PDF text and render page PNGs for offline papers.
 - `scripts/crop_pdf_figures.py`: optional helper to batch crop figures/tables from page PNGs and create a contact sheet for QA.
+- `$openrouter-icu-image`: optional post-processing skill for generating a high-quality flat technical analysis diagram from the completed `analysis.md`.

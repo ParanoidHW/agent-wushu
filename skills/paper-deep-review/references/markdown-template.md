@@ -15,6 +15,7 @@ Use this template for Chinese paper-review deliverables. Adapt headings when the
 - OpenReview：`<url or unavailable>`；公开评审/decision/rebuttal：`<path or unavailable>`
 - 提取文本：`<path>`
 - 图表：列出 Figure/Table 与本地图片路径；标明截图是否包含完整 caption，边距是否已经裁成窄边界。
+- AI 生成分析示意图：`<figures/generated/algorithm-analysis.png or unavailable>`
 
 ## 0.1 符号表
 
@@ -31,6 +32,14 @@ Use this template for Chinese paper-review deliverables. Adapt headings when the
 | 术语 | 本文含义 | 不等于/易混项 | 证据来源 |
 |---|---|---|---|
 | `<term>` | `<definition in this paper>` | `<what it is not>` | `<Section/Table/Code>` |
+
+## 0.3 AI 生成算法分析示意图
+
+如果 `$openrouter-icu-image` 可用且已成功生成图片，在这里插入。该图只能作为分析辅助，不替代论文原图、表格或实验数据。
+
+![AI-generated algorithm analysis diagram](figures/generated/algorithm-analysis.png)
+
+> 图注：AI 生成的扁平化算法分析示意图，基于本文 Markdown 分析生成，用于概括方法机制、证据链、技术点消融支撑、关键局限和 infra 影响；不代表论文原始图表。
 
 ## 1. 论文基本信息
 
@@ -154,7 +163,15 @@ $$
 
 给出参数量、activation、cache、数据缓存公式。
 
-### 7.3 带宽与互联
+### 7.3 Data Types / 数值格式
+
+记录论文或代码实际使用的数据类型和格式：fp32、fp16、bf16、fp8、int8、int4、binary/ternary、稀疏格式、混合精度、累加精度、量化/反量化、packing/unpacking、layout transform。说明收益是否依赖特定硬件指令、tensor core、NPU kernel 或定制算子。
+
+| 对象 | 数据类型/格式 | 使用阶段 | 硬件依赖 | 对精度/速度/显存的影响 | 证据 |
+|---|---|---|---|---|---|
+| `<weights/activation/KV/logits/index/cache>` | `<bf16/int8/fp8/...>` | `<train/infer/serving>` | `<GPU/NPU/CPU/instruction>` | `<impact>` | `<paper/code/config>` |
+
+### 7.4 带宽、互联与高效利用
 
 给出通信量公式：
 
@@ -162,7 +179,29 @@ $$
 \mathrm{Bytes}=<formula>
 $$
 
-### 7.4 调度/Serving/自定义算子
+不仅估算 raw bandwidth，还要估算/讨论有效带宽利用率：
+
+$$
+\mathrm{EffectiveBandwidth}=\frac{\mathrm{BytesMoved}}{\mathrm{RuntimeSeconds}},
+\quad
+\mathrm{Utilization}=\frac{\mathrm{EffectiveBandwidth}}{\mathrm{PeakBandwidth}}
+$$
+
+分析 memory locality、cache reuse、tiling、operator fusion、通信/计算 overlap、压缩传输、all-reduce/all-to-all、PCIe/NVLink/RDMA、HBM/DDR 访问，以及 bottleneck 是 memory-bound、compute-bound 还是 communication-bound。
+
+| 路径 | 数据量 | 峰值带宽 | 有效带宽/利用率 | 优化机制 | 瓶颈判断 | 证据 |
+|---|---:|---:|---:|---|---|---|
+| `<HBM/PCIe/NVLink/RDMA/CPU-GPU>` | `<bytes>` | `<GB/s>` | `<GB/s or %>` | `<fusion/tiling/overlap/compression>` | `<memory/compute/comm>` | `<paper/code>` |
+
+### 7.5 CPU/GPU/NPU 异构执行
+
+分析方法是否依赖 CPU、GPU、NPU 或其他 accelerator 的异构协同，是否存在 host-device transfer、CPU preprocessing/postprocessing、GPU/NPU kernel、异步 copy、DMA、pinned memory、fallback path、调度 placement、pipeline overlap。
+
+| 阶段 | CPU 角色 | GPU/NPU/加速器角色 | 数据移动 | 同步/overlap | 潜在瓶颈 | 证据 |
+|---|---|---|---|---|---|---|
+| `<preprocess/train/infer/serving/postprocess>` | `<role>` | `<role>` | `<path/bytes>` | `<sync/async>` | `<bottleneck>` | `<paper/code>` |
+
+### 7.6 调度/Serving/自定义算子
 
 说明 runtime、batching、scheduler、kernel、KV cache、CUDA graph 等需求。
 
