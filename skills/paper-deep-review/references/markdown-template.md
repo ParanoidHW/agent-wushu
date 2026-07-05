@@ -12,6 +12,7 @@ Use this template for Chinese paper-review deliverables. Adapt headings when the
 - 论文：`<path>`
 - 源码/LaTeX：`<path or unavailable>`
 - 开源代码：`<repo url>`, commit `<hash>`
+- OpenReview：`<url or unavailable>`；公开评审/decision/rebuttal：`<path or unavailable>`
 - 提取文本：`<path>`
 - 图表：列出 Figure/Table 与本地图片路径；标明截图是否包含完整 caption，边距是否已经裁成窄边界。
 
@@ -84,13 +85,21 @@ $$
 
 按 Figure/Table 解释，避免只复述 caption。
 
+先把论文声称的技术点逐一列出来，再判断是否有消融实验或受控证据支撑其收益。不要把“完整方法优于 baseline”直接等同于“每个技术点都有效”。
+
+| 论文声称的技术点 | 声称收益/效果 | 对应实验/消融 | 对照是否受控 | 指标变化 | 证据强度 | 结论 |
+|---|---|---|---|---|---|---|
+| `<component/objective/data/inference/kernel>` | `<claimed benefit>` | `<Table/Figure/Appendix/none>` | `<matched/confounded/unknown>` | `<delta>` | `<direct ablation / replacement baseline / sensitivity / mechanism visualization / theory / code-only / none>` | `<supported/partially supported/unverified/correlation-only>` |
+
+对没有消融的核心技术点，说明缺少什么最小实验，例如移除该模块、替换为常规模块、固定其他变量的训练预算对比、不同规模/数据域敏感性分析、或 runtime-only 与 algorithm-only 分离实验。
+
 ### 4.3 是否验证了假设
 
 逐条对应论文假设、方法设计和实验结果。
 
 ### 4.4 收益来源归因
 
-分开说明每个组件影响的是候选质量、accepted length、latency、memory，还是 serving throughput。
+基于上面的技术点证据矩阵做归因。分开说明每个组件影响的是候选质量、accepted length、latency、memory，还是 serving throughput。
 
 | 组件/变化 | 对比基线 | 指标变化 | 影响路径 | 证据强度 |
 |---|---|---|---|---|
@@ -104,19 +113,48 @@ $$
 |---|---|---|---|---|
 | <work> | <mechanism> | <benefit> | <limit> | <contrast> |
 
-## 6. Infra 需求分析
+## 6. OpenReview 公开评审 × 论文内容交叉核验
+
+如果论文没有公开 OpenReview 页面，写“未发现公开 OpenReview 评审”并跳过表格。不要把 reviewer 意见当作事实或独立结论；必须逐条核对论文正文、appendix、rebuttal、代码和实验，并把结论回填到方法、实验、局限、代码或 infra 相关章节。
+
+- OpenReview 链接：
+- 评审/讨论访问日期：
+- decision/meta-review 状态：
+- author response/rebuttal 状态：
+
+| 来源 | 评审观点/约束/潜在问题 | 对应论文 claim/实验 | 论文/appendix/rebuttal/代码证据 | 状态 | 交叉核验后的判断 |
+|---|---|---|---|---|---|
+| `<review/meta-review/comment>` | `<claim>` | `<Section/Fig/Table/Eq/Code>` | `<evidence>` | `<resolved/partial/unresolved/unclear>` | `<是否实质削弱贡献、缩小适用范围、需要补实验或属于误解>` |
+
+### 6.1 与论文证据一致的正向评价
+
+说明哪些 reviewer 正向评价能被论文实验、理论、代码或 benchmark 证据支撑。
+
+### 6.2 经核验仍成立的主要担忧
+
+重点分析 novelty、正确性、baseline 公平性、消融充分性、数据泄漏、指标选择、理论假设、复现性、清晰度、伦理/安全和部署约束。
+
+### 6.3 Rebuttal/Revision 是否真正解决问题
+
+区分作者已回应且有证据解决的问题、只做口头解释的问题、仍未解决的问题，以及可能来自 reviewer 误解的问题。
+
+### 6.4 对本文贡献、适用范围和潜在风险的影响
+
+把评审线索转化为论文级判断：哪些问题会削弱核心结论，哪些只是限制外推范围，哪些提示后续复现或扩展实验。
+
+## 7. Infra 需求分析
 
 分开写 paper-reported facts 与 inferred estimates。
 
-### 6.1 算力
+### 7.1 算力
 
 给出 FLOPs/latency/throughput 公式。
 
-### 6.2 显存与存储
+### 7.2 显存与存储
 
 给出参数量、activation、cache、数据缓存公式。
 
-### 6.3 带宽与互联
+### 7.3 带宽与互联
 
 给出通信量公式：
 
@@ -124,11 +162,11 @@ $$
 \mathrm{Bytes}=<formula>
 $$
 
-### 6.4 调度/Serving/自定义算子
+### 7.4 调度/Serving/自定义算子
 
 说明 runtime、batching、scheduler、kernel、KV cache、CUDA graph 等需求。
 
-## 7. 开源代码对照
+## 8. 开源代码对照
 
 - 仓库：
 - commit：
@@ -140,7 +178,7 @@ $$
 
 明确说明 paper 技术细节不清楚时，源码如何补充；源码未覆盖时，不要过度推断。
 
-### 7.1 开源权重/配置对照
+### 8.1 开源权重/配置对照
 
 当论文或 README 指向公开 checkpoint/model weights 时，检查 metadata/config，并与关键 baseline 做容量、结构、算法开关对比。
 
@@ -150,7 +188,7 @@ $$
 
 如果因为网络或权限无法读取配置，写明“未验证”，不要用 README 文字代替配置事实。
 
-## 8. 优点与局限
+## 9. 优点与局限
 
 ### 优点
 
@@ -158,13 +196,13 @@ $$
 
 ### 可改进之处
 
-## 9. 研究启发
+## 10. 研究启发
 
 - 可借鉴思路：
 - 可延伸方向：
 - 可复现实验：
 
-## 10. 解读问题/待验证清单
+## 11. 解读问题/待验证清单
 
 这些问题用于后续复读、复现或组会讨论：
 
@@ -173,13 +211,15 @@ $$
 3. baseline 是否公平，是否同数据、同预算、同指标？
 4. 主结果是否依赖某个特定数据域、模型规模或系统负载？
 5. 消融是否足以证明每个模块必要？
-6. 公式中的概率、吞吐、显存或带宽估计是否有隐含单位和边界条件？
-7. 论文声称的生产结果是否有足够 telemetry、SLA、负载说明？
-8. 开源代码是否实现了论文核心算法，还是只实现训练/评测子集？
-9. 哪些关键细节无法从论文或代码确认？
-10. 如果要复现，最小闭环需要哪些数据、模型、硬件和脚本？
+6. 论文声称的每个技术点是否都有独立消融或受控对照？有没有多个改动被捆绑导致无法归因？
+7. 公式中的概率、吞吐、显存或带宽估计是否有隐含单位和边界条件？
+8. 论文声称的生产结果是否有足够 telemetry、SLA、负载说明？
+9. 开源代码是否实现了论文核心算法，还是只实现训练/评测子集？
+10. 哪些关键细节无法从论文或代码确认？
+11. 如果要复现，最小闭环需要哪些数据、模型、硬件和脚本？
+12. 如果有 OpenReview 公开评审，哪些 reviewer concerns 仍未被论文、rebuttal 或代码充分解决？
 
-## 11. 一句话总结
+## 12. 一句话总结
 
 用 1-2 句话说明本文最核心价值和最大不确定性。
 ```

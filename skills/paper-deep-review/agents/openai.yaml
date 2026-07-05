@@ -1,4 +1,4 @@
 interface:
   display_name: "Paper Deep Review"
-  short_description: "Structured paper analysis with figures"
-  default_prompt: "Use $paper-deep-review to produce a rigorous Markdown review of this paper with figures, source/code checks, and infra analysis."
+  short_description: "Structured paper analysis with figures and reviews"
+  default_prompt: "Use $paper-deep-review to produce a rigorous Markdown review of this paper with figures, source/code checks, OpenReview public-review analysis when available, and infra analysis."

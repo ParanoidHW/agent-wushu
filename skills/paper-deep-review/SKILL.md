@@ -1,6 +1,6 @@
 ---
 name: paper-deep-review
-description: Rigorous academic paper and technical-report review workflow. Use when Codex is asked to deeply read, analyze, summarize, or structure a paper, arXiv article, PDF, LaTeX source, technical whitepaper, or model/system report; produce Markdown with figures, formulas, evidence chains, related-work comparison, infrastructure analysis, and optional source-code cross-checks.
+description: Rigorous academic paper and technical-report review workflow. Use when Codex is asked to deeply read, analyze, summarize, or structure a paper, arXiv article, OpenReview submission, PDF, LaTeX source, technical whitepaper, or model/system report; produce Markdown with figures, formulas, evidence chains, related-work comparison, OpenReview public-review analysis when available, infrastructure analysis, and optional source-code cross-checks.
 ---
 
 # Paper Deep Review
@@ -18,11 +18,13 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - `figures/page_png/`
    - `figures/crops/`
    - `code/<repo-name>/`
+   - `openreview_reviews.md` when public OpenReview reviews/discussion exist
    - `analysis.md`
 
 2. **Acquire source material.**
    - If the user gives a local/offline PDF, use it as the primary source and do not assume arXiv/source exists.
    - If the user gives an arXiv ID or paper URL, fetch the PDF and source archive when network access is allowed; use original LaTeX figures when available.
+   - If the user gives an OpenReview URL or the paper has an OpenReview page, collect publicly visible reviews, meta-review, decision, author response/rebuttal, and public discussion when accessible. Save a concise evidence-preserving summary to `openreview_reviews.md` with URLs, forum/note IDs when visible, reviewer scores/confidence when visible, and access date.
    - If a code repo is provided, clone it into `code/`, record remote URL and commit hash, and inspect code rather than relying only on README claims.
 
 3. **Extract text and figures.**
@@ -41,6 +43,8 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
 4. **Read with evidence discipline.**
    - Map every important claim to a paper section, figure, table, appendix, or code path.
    - Explain the logic chain: problem -> assumption -> method -> measurement -> conclusion.
+   - Build a **technical-claim evidence matrix** for the paper's claimed technical points: each new component, architecture choice, loss/objective, data construction, training recipe, inference procedure, kernel/runtime optimization, benchmark design, or analysis claim must be mapped to supporting evidence.
+   - For every claimed technical point, check whether the paper provides direct ablation, replacement baseline, sensitivity analysis, controlled experiment, mechanism visualization, theoretical proof, or code/config evidence. Mark unsupported points explicitly as unverified, correlation-only, or plausible but not isolated.
    - Use LaTeX math for formulas. Do not leave formulas as plain-text approximations when exact notation matters.
    - Mark assumptions and inferred calculations explicitly.
    - Build a **symbol table before the method/formula discussion**. For every symbol used in key equations or metrics, record its meaning, scope/indexing, units if any, source equation/section, and any paper-specific ambiguity. Do not assume a symbol has the same meaning across papers.
@@ -53,13 +57,32 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - Compare against the current paper by mechanism, benefit, limitation, and fairness of the comparison.
    - Avoid broad literature essays; focus on why the paper's design differs and what trade-off it makes.
 
-6. **Analyze infrastructure requirements.**
+6. **Cross-check OpenReview public reviews against the paper when available.**
+   - Trigger this step for OpenReview URLs, OpenReview-hosted submissions, or papers whose official venue page links to OpenReview.
+   - Treat reviews as hypotheses and reading leads, not a standalone section of opinions. For each important reviewer claim, map it to the exact paper claim, method assumption, experiment, table, appendix item, rebuttal statement, or code path it challenges or supports.
+   - Separate public reviewer claims from your own analysis. Do not treat reviewer criticism as ground truth until checked against the paper, appendix, rebuttal, code, or experiments.
+   - Extract recurring reviewer concerns: novelty, correctness, missing baselines, experiment design, dataset leakage, metric choice, ablation gaps, theoretical assumptions, reproducibility, clarity, ethical/safety concerns, and deployment constraints.
+   - Extract positive signals: strong contributions, convincing experiments, useful benchmark or dataset, clear system design, open-source implementation, or community interest.
+   - Compare review-stage issues with the final paper when possible: which issues were resolved by rebuttal/revision, which remain unresolved, which are weakened by paper/code evidence, and which are reviewer misunderstandings.
+   - For each major concern, write an evidence-based conclusion: whether it materially weakens the paper's contribution, only narrows the valid scope, suggests an extra experiment, or is not supported after checking the paper.
+   - Integrate review-derived findings into the relevant analysis sections too: constraints in basic information, missing baselines in experiments, unresolved assumptions in methods, reproducibility issues in code checks, and deployment concerns in infra analysis.
+   - Include a compact OpenReview cross-check table in `analysis.md`:
+     - review/source
+     - claim or concern
+     - severity
+     - linked paper claim or experiment
+     - evidence in paper/rebuttal/code
+     - status: resolved, partially resolved, unresolved, or unclear
+     - your reading impact after cross-check
+   - If reviews are private, missing, blocked, or hidden after acceptance, state that public OpenReview analysis could not be performed.
+
+7. **Analyze infrastructure requirements.**
    - Include compute, memory, bandwidth, interconnect, scheduler/runtime, and custom-operator implications when relevant.
    - Provide formulas for derived estimates, such as parameter count, activation/cache size, communication volume, expected throughput, or latency.
    - Separate paper-reported numbers from your own calculations.
    - Separate mechanism effects from system effects. For example, distinguish candidate-set quality, verification algorithm, custom kernels, batching, KV-cache layout, CUDA graphing, and scheduler policy. Do not attribute accepted-length gains to an execution kernel unless the paper/code shows that the kernel changes the candidate set or scoring.
 
-7. **Cross-check code when available.**
+8. **Cross-check code when available.**
    - Inspect configs, model architecture, loss, data pipeline, evaluation, and serving/inference paths.
    - Link local file paths and, when possible, stable GitHub URLs pinned to a commit.
    - State what is implemented, what is only described in the paper, and what remains ambiguous.
@@ -67,14 +90,19 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - For code/config comparisons, explicitly distinguish capacity changes (layers, width, heads, parameter count), algorithmic changes (masking, scoring, sampling, loss), and runtime changes (kernels, cache, graphing).
    - If network access or model metadata access fails, state the limitation and do not infer checkpoint configuration from README claims alone.
 
-8. **Attribute gains carefully.**
+9. **Attribute gains carefully.**
+   - Before attributing gains, enumerate the paper's claimed technical points and identify which claims are actually tested by ablations or controlled comparisons.
+   - Distinguish direct evidence (component removed/replaced under matched settings), indirect evidence (trend or visualization), confounded evidence (multiple changes bundled together), and no evidence.
    - When explaining why a method improves results, build a component-level attribution table if the paper has enough baselines: data/training objective, draft/candidate generation, search/tree construction, target verification, and serving/runtime.
    - Use bridge baselines (for example, baseline -> tree variant -> proposed method) to estimate contributions only as a rough decomposition. Mark such calculations as inferred, not paper-proven, unless the paper reports matched ablations.
    - Report both absolute and relative changes in the paper's primary metric, and identify when a component affects accepted length/quality versus latency/throughput.
+   - If a technical point is central to the contribution but lacks ablation or controlled evidence, surface it again in limitations and unresolved reading questions.
 
-9. **Write `analysis.md`.**
+10. **Write `analysis.md`.**
    - Use the reusable template in `references/markdown-template.md`.
    - Include a source/figure inventory near the top.
+   - Include OpenReview public-review cross-check when available, combining reviewer concerns with paper content, rebuttal, appendix, experiments, and code evidence instead of listing reviews separately.
+   - Include the technical-claim evidence matrix before or inside the key-results section, so claimed technical points are visibly tied to ablation/mechanism evidence or marked as unsupported.
    - Include the symbol table near the top before the method section.
    - Include a terminology/data-construction clarification when the paper uses paper-specific names for datasets, variants, generated data, budgets, masks, or model roles.
    - Include images inline near the discussion they support.
@@ -87,9 +115,11 @@ Before finishing:
 - Confirm all Markdown image links resolve.
 - Review all crops in a contact sheet or individually for full captions/titles and narrow clean boundaries; fix crops that include the next paragraph, page chrome, neighboring content, excessive whitespace, or any truncated caption.
 - Confirm every key number in the review maps to a paper section/table/figure or a clearly stated calculation.
+- Confirm every claimed technical point has been checked for ablation/control/mechanism evidence and unsupported claims are explicitly marked.
 - Confirm code claims include file paths and commit hashes.
 - Confirm the symbol table covers every variable used in key formulas, metrics, and tables.
 - Confirm ambiguous mechanism terms are stage-qualified: drafting vs tree construction vs target verification vs serving/runtime.
+- For OpenReview papers, confirm public reviews/meta-review/decision/rebuttal were checked when accessible, saved or summarized in `openreview_reviews.md`, and cross-checked against paper content, appendix, rebuttal, experiments, and code before drawing conclusions.
 - Confirm gain-attribution statements are supported by matched ablations or explicitly marked as rough/inferred decompositions.
 - Confirm checkpoint/config claims are grounded in inspected metadata or clearly marked as unverified.
 - If tests or extraction tools could not run, state that limitation in the final response.
