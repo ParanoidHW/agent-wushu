@@ -61,7 +61,7 @@ python wushu.py status
 
 `registry.yaml` 当前注册 **8 Skills + 1 Tool + 1 CLI + 4 Plugins**，用于按类别、标签或模块名同步外部资源。
 
-当前工作区还包含本地维护的增强模块：`openrouter-icu-image`、`paper-deep-review`、`research-paper-to-ppt`、`skill_converter.py` 和 `interaction_record`。
+当前工作区还包含本地维护的增强模块：`openrouter-icu-image`、`paper-deep-review`、`ai-algorithm-survey`、`research-paper-to-ppt`、`skill_converter.py` 和 `interaction_record`。
 
 👉 **详细说明请查看**: [已集成模块文档](./docs/INTEGRATED_MODULES.md)
 
@@ -71,7 +71,7 @@ python wushu.py status
 | Registry Tools | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#tools) |
 | Registry CLIs | 1 | [`registry.yaml`](./registry.yaml) |
 | Registry Plugins | 4 | [查看详情](./docs/INTEGRATED_MODULES.md#plugins) |
-| Local Enhancements | 5 | 见下方“本地增强能力” |
+| Local Enhancements | 6 | 见下方“本地增强能力” |
 
 ### 快速概览
 
@@ -82,7 +82,8 @@ python wushu.py status
 - [Excalidraw Diagram Skill](./skills/excalidraw-diagram/) - 论证性图表生成
 - [Agent Research Skills](./skills/agent-research-skills/) - 深度研究、论文写作、实验和幻灯片生成 skill 集合
 - [Research Paper to PPT](./skills/research-paper-to-ppt/) - 论文分析报告和可编辑 PPTX 生成流程
-- [Paper Deep Review](./skills/paper-deep-review/) - 严格论文/技术报告深度审阅、公式和图表证据链整理
+- [Paper Deep Review](./skills/paper-deep-review/) - 严格论文/技术报告深度审阅、技术点消融证据、OpenReview 评审交叉核验和可选 AI 分析示意图
+- [AI Algorithm Survey](./skills/ai-algorithm-survey/) - 面向特定 AI 算法领域的论文/GitHub awesome 检索、机构归属和热度价值信号记录、逐篇深度分析、趋势/infra 综合和可选 AI 示意图
 - [OpenRouter ICU Image](./skills/openrouter-icu-image/) - OpenRouter ICU 图像生成/编辑、文件输入和多候选图生成
 - `cli-anything-skill` / `awesome-agent-skills` - 已在 `registry.yaml` 注册，可按需同步
 
@@ -168,11 +169,12 @@ python3 -m http.server 8000
 # 浏览器访问 http://localhost:8000/tools/interaction_record/interaction-viewer.html
 ```
 
-### Paper Review / Paper to PPT
+### AI Algorithm Survey / Paper Review / Paper to PPT
 
-本仓库维护了两个论文相关本地 skill：
+本仓库维护了三个论文相关本地 skill：
 
-- [`skills/paper-deep-review`](./skills/paper-deep-review/)：面向论文、技术报告、PDF/LaTeX/source code 的严格深度审阅流程，强调公式、图表、代码和证据链。
+- [`skills/ai-algorithm-survey`](./skills/ai-algorithm-survey/)：输入特定 AI 算法领域后，通过搜索引擎、GitHub/awesome 论文列表、arXiv 和 CVPR、ICML、ICLR、NeurIPS、AAAI、TPAMI、TIP、IROS、ICRA、RA-L 等顶会顶刊检索候选论文，记录论文归属组织/高校、代码仓库热度、引用数、候选论文间交叉引用频率等信号，识别高热度高价值论文，筛选代表性工作，并调用 `paper-deep-review` 逐篇分析后汇总技术谱系、演进趋势和软硬件 infra 需求维度，包括 data types、高效带宽利用、CPU/GPU/NPU 异构等；如果 `openrouter-icu-image` 可用，会基于最终 Markdown 生成浅金色扁平化趋势/infra 示意图并插入文档。
+- [`skills/paper-deep-review`](./skills/paper-deep-review/)：面向论文、技术报告、PDF/LaTeX/source code 的严格深度审阅流程，强调公式、图表、代码和证据链；会逐项核对论文声称的技术点是否有消融实验、受控对照或机制证据支撑，并分析 data types、高效带宽利用、CPU/GPU/NPU 异构等 infra 影响；如果论文有公开 OpenReview 页面，会结合论文正文、appendix、rebuttal、实验和代码对评审意见进行交叉核验，而不是只罗列 reviewer comments；如果 `openrouter-icu-image` 可用，会基于最终 Markdown 生成浅金色扁平化算法分析示意图并插入文档。
 - [`skills/research-paper-to-ppt`](./skills/research-paper-to-ppt/)：将论文分析结果组织为报告和可编辑 PPTX 的工作流。
 
 `paper-deep-review` 包含 PDF 文本/图片提取、图表裁剪和 Markdown 模板资源，适合离线 PDF 和带代码仓库的论文复核。
