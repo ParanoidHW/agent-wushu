@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Algorithm Survey"
+  short_description: "Search papers, impact signals, and AI lineages"
+  default_prompt: "Use $ai-algorithm-survey to survey a specific AI algorithm field, deep-review key papers, and summarize the technical evolution."
