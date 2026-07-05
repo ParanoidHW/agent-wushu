@@ -1,6 +1,8 @@
 # Agent Wushu (武术)
 
-Agent 工具/Skills 仓库，集成 GitHub 上开源的 agent 工具、skill、CLI 等。
+Agent 工具/Skills 仓库，集成和维护可复用的 agent skills、工具、插件和本地工作流。
+
+这个仓库既包含从开源项目同步来的模块，也包含本地增强能力，例如 OpenRouter ICU 图像生成 skill、论文深度审阅 skill、跨平台 skill 转换器，以及交互记录查看/刷新工具。
 
 ## 目录结构
 
@@ -57,31 +59,134 @@ python wushu.py status
 
 ## 已集成模块
 
-当前已集成 **6 Skills + 1 Tool + 1 Plugin**。
+`registry.yaml` 当前注册 **8 Skills + 1 Tool + 1 CLI + 4 Plugins**，用于按类别、标签或模块名同步外部资源。
+
+当前工作区还包含本地维护的增强模块：`openrouter-icu-image`、`paper-deep-review`、`research-paper-to-ppt`、`skill_converter.py` 和 `interaction_record`。
 
 👉 **详细说明请查看**: [已集成模块文档](./docs/INTEGRATED_MODULES.md)
 
 | 类别 | 数量 | 链接 |
 |------|------|------|
-| Skills | 6 | [查看详情](./docs/INTEGRATED_MODULES.md#skills) |
-| Tools | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#tools) |
-| Plugins | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#plugins) |
+| Registry Skills | 8 | [查看详情](./docs/INTEGRATED_MODULES.md#skills) |
+| Registry Tools | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#tools) |
+| Registry CLIs | 1 | [`registry.yaml`](./registry.yaml) |
+| Registry Plugins | 4 | [查看详情](./docs/INTEGRATED_MODULES.md#plugins) |
+| Local Enhancements | 5 | 见下方“本地增强能力” |
 
 ### 快速概览
 
 **Skills:**
-- [Anthropic PPTX Skill](./skills/anthropics-pptx/skills/pptx/) - PPTX 处理
+- [Anthropic PPTX Skill](./skills/anthropics-pptx/) - PPTX 处理
 - [NanoBanana PPT Skills](./skills/nanobanana-ppt/) - AI PPT 生成
 - [Guizang PPT Skill](./skills/guizang-ppt-skill/) - 杂志风/瑞士风网页 PPT 和封面生成
 - [Excalidraw Diagram Skill](./skills/excalidraw-diagram/) - 论证性图表生成
 - [Agent Research Skills](./skills/agent-research-skills/) - 深度研究、论文写作、实验和幻灯片生成 skill 集合
 - [Research Paper to PPT](./skills/research-paper-to-ppt/) - 论文分析报告和可编辑 PPTX 生成流程
+- [Paper Deep Review](./skills/paper-deep-review/) - 严格论文/技术报告深度审阅、公式和图表证据链整理
+- [OpenRouter ICU Image](./skills/openrouter-icu-image/) - OpenRouter ICU 图像生成/编辑、文件输入和多候选图生成
+- `cli-anything-skill` / `awesome-agent-skills` - 已在 `registry.yaml` 注册，可按需同步
 
 **Tools:**
 - [Skill Converter](./tools/skill_converter.py) - 跨平台格式转换
+- [Interaction Record](./tools/interaction_record/) - 交互记录写入、Markdown spec 和 HTML 查看器
 
 **Plugins:**
 - [OpenCode Commands](./plugins/opencode-commands/) - CLI 工具集
+- `claude-plugin` / `pi-extension` / `qoder-plugin` - 已在 `registry.yaml` 注册，可按需同步
+
+## 本地增强能力
+
+### OpenRouter ICU Image
+
+[`skills/openrouter-icu-image`](./skills/openrouter-icu-image/) 提供一个无第三方 Python 依赖的同步 CLI，用于调用 OpenRouter ICU 的 OpenAI-compatible 图像接口。
+
+核心能力：
+
+- 文本生图：`/v1/images/generations`
+- 本地图片编辑和多图参考：`/v1/images/edits` + multipart `image[]`
+- 远程图片引用：`--image-url`
+- 非图片文档输入：`responses-doc` 走 `/v1/responses` + `input_file` + `image_generation`
+- 多候选图：`--n 3` 时输出自动编号
+- 默认高质量输出：`quality=high`
+- Streaming SSE 解析、partial/final image 解码和本地文件写入
+
+示例：
+
+```bash
+cd skills/openrouter-icu-image
+
+# 文本生图
+python3 scripts/openrouter_icu_image.py generate \
+  --prompt "A clean product photo of a white ceramic coffee mug on a wooden desk" \
+  --output output/openrouter-icu/mug.png
+
+# 本地图片编辑
+python3 scripts/openrouter_icu_image.py edit \
+  --image input.png \
+  --prompt "Change the background while preserving the subject" \
+  --output output/openrouter-icu/edited.png
+
+# Markdown/PDF/TXT 等文档作为图像生成上下文
+python3 scripts/openrouter_icu_image.py responses-doc \
+  --input-file report.md \
+  --prompt "Create three distinct technical infographic candidates from the uploaded document" \
+  --n 3 \
+  --output output/openrouter-icu/report.png
+```
+
+### Interaction Record
+
+[`tools/interaction_record`](./tools/interaction_record/) 用于保存和查看主题相关的用户-Agent 交互历史。
+
+包含：
+
+- `record_interaction.py`：追加交互记录，支持 hook stdin payload。
+- `interaction-record-spec.md`：Markdown 交互记录格式。
+- `interaction-viewer.html`：单文件 HTML 查看器。
+
+查看器特性：
+
+- 选择或拖入 `.md/.markdown` 文件加载。
+- 支持 Mermaid、LaTeX、表格、代码块等常见 Markdown 内容。
+- 自动刷新文件内容；支持 Chromium 系浏览器刷新页面后恢复上次文件句柄。
+- 默认页面宽度为浏览器宽度的 80%。
+- 背景主题可切换：深色技术风格 / 浅金色背景。
+
+示例：
+
+```bash
+# 追加一轮记录
+python3 tools/interaction_record/record_interaction.py \
+  -o interaction-history.md \
+  append \
+  --user "用户问题" \
+  --agent "Agent 回答" \
+  --turn-title "简短标题"
+
+# 打开查看器
+python3 -m http.server 8000
+# 浏览器访问 http://localhost:8000/tools/interaction_record/interaction-viewer.html
+```
+
+### Paper Review / Paper to PPT
+
+本仓库维护了两个论文相关本地 skill：
+
+- [`skills/paper-deep-review`](./skills/paper-deep-review/)：面向论文、技术报告、PDF/LaTeX/source code 的严格深度审阅流程，强调公式、图表、代码和证据链。
+- [`skills/research-paper-to-ppt`](./skills/research-paper-to-ppt/)：将论文分析结果组织为报告和可编辑 PPTX 的工作流。
+
+`paper-deep-review` 包含 PDF 文本/图片提取、图表裁剪和 Markdown 模板资源，适合离线 PDF 和带代码仓库的论文复核。
+
+### Skill Converter
+
+[`tools/skill_converter.py`](./tools/skill_converter.py) 用于在 Claude、Codex、OpenCode、Cursor 等平台之间转换 `SKILL.md` 格式。
+
+示例：
+
+```bash
+python tools/skill_converter.py convert path/to/SKILL.md codex -o .codex/skills/demo/SKILL.md
+python tools/skill_converter.py batch skills/ claude opencode cursor -o converted/
+```
 
 ## 部署到各平台
 
@@ -90,6 +195,8 @@ python wushu.py status
 👉 **详细部署指南**: [Skill 部署指南](./docs/SKILL_DEPLOYMENT.md)
 
 ### 快速部署
+
+以下以 `anthropics-pptx-skill` 已克隆后的目录布局为例：
 
 ```bash
 # Claude Code（个人 skill）
@@ -125,6 +232,7 @@ python tools/skill_converter.py batch skills/ claude opencode cursor -o converte
 | [管理脚本](./docs/WUSHU_CLI.md) | wushu.py 使用指南 |
 | [Skill Converter](./docs/SKILL_CONVERTER.md) | 格式转换工具文档 |
 | [Agent 参考](./docs/AGENT_REFERENCE.md) | Agent 快速参考指南 |
+| [交互记录规范](./tools/interaction_record/interaction-record-spec.md) | Markdown 交互记录格式 |
 
 ## 添加新模块
 
