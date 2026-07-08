@@ -11,12 +11,33 @@ Use this skill to turn a user-specified AI algorithm field into a traceable lite
 
 Default output language is Chinese unless the user asks otherwise. Keep paper titles, method names, datasets, formulas, and code identifiers in their original language when that preserves precision.
 
+## Mandatory Execution Contract
+
+Treat this skill as a required workflow, not a set of suggestions. Once this skill is selected or explicitly invoked, every numbered workflow section and every Quality Check below is mandatory unless the user explicitly narrows the task and accepts the reduced standard.
+
+Before starting substantive work:
+
+- Create `execution_checklist.md` in the survey folder.
+- Convert Workflow sections 1-8 and the Quality Checks into concrete checklist items.
+- Mark each item as `pending`, `done`, `blocked`, or `skipped-with-reason`.
+- Keep the checklist updated after each phase and before any final response.
+
+Do not silently substitute different artifacts for required outputs:
+
+- A short summary is not a substitute for `$paper-deep-review`.
+- A generated SVG, hand-written diagram, prompt-only image, or image generated from pasted/summarized Markdown is not a substitute for Section 8.
+- If `$openrouter-icu-image` is installed and `OPENROUTER_ICU_API_KEY` is available, Section 8 must produce `figures/generated/survey-trends-infra.png` from `responses-doc --input-file synthesis.md`.
+- If a required tool, API key, PDF, source, code repository, or network access is unavailable, record the exact limitation in `execution_checklist.md`, the relevant report file, and the final response.
+
+Before final response, reread `execution_checklist.md` and verify every mandatory item is either completed or explicitly blocked/skipped with evidence. Do not declare the survey complete while any mandatory item remains unclassified.
+
 ## Output Layout
 
 Create one workspace folder per survey:
 
 ```text
 ai_algorithm_survey_<field_slug>/
+├── execution_checklist.md
 ├── search_log.md
 ├── github_sources.md
 ├── impact_signals.md
@@ -49,6 +70,8 @@ Extract or ask for only the missing high-impact constraints:
 - whether to include surveys, benchmarks, code repositories, or only peer-reviewed papers.
 
 Normalize the field into a compact slug, then create the output folder before searching.
+
+Immediately after creating the folder, write the initial `execution_checklist.md` with all workflow and Quality Check items. This checklist is part of the required output.
 
 ### 2. Build Search Queries
 
@@ -201,6 +224,8 @@ For each paper:
 
 If `$paper-deep-review` is unavailable, stop and tell the user it must be installed or provided before the batch survey can meet the requested standard.
 
+After each paper review, update `execution_checklist.md` with the paper folder, `analysis.md` path, whether PDF/source/code were acquired, and any `$paper-deep-review` limitations inherited from that paper's final response.
+
 ### 7. Synthesize the Field
 
 After all selected papers have `analysis.md`, write `synthesis.md` from the deep-review outputs and original paper metadata.
@@ -243,10 +268,13 @@ After `synthesis.md` is complete, use `$openrouter-icu-image` if it is installed
 
 If `$openrouter-icu-image` or `OPENROUTER_ICU_API_KEY` is unavailable, skip generation and state the limitation in the final response.
 
+Record the exact Section 8 outcome in `execution_checklist.md`: command path or invocation method, whether `responses-doc --input-file synthesis.md` was used, output image path, link insertion status, or the precise reason generation was skipped. Do not mark Section 8 as done for non-PNG substitutes.
+
 ## Quality Checks
 
 Before finishing:
 
+- Confirm `execution_checklist.md` exists, was updated after each major phase, and has no unclassified mandatory items.
 - Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, each selected paper `analysis.md`, and `synthesis.md` exist.
 - Confirm search covered general search, GitHub/awesome repositories, arXiv, and relevant top venues/journals when available.
 - Confirm candidate papers record `affiliations` and `affiliation_evidence`, using explicit caveats where affiliations are unavailable.
@@ -255,6 +283,7 @@ Before finishing:
 - Confirm each selected method paper was analyzed with `$paper-deep-review`.
 - Confirm synthesis claims cite selected papers or their `analysis.md` files; label cross-paper inferences explicitly.
 - If `$openrouter-icu-image` was available, confirm `synthesis.md` was passed as the `responses-doc --input-file` reference document, `figures/generated/survey-trends-infra.png` exists, and it is linked from `synthesis.md`; if unavailable or failed, state the limitation.
+- Confirm no required artifact was replaced by an easier substitute unless it is explicitly marked as skipped-with-reason.
 - Separate peer-reviewed versions from arXiv-only preprints.
 - State missing access, blocked downloads, paywalls, unavailable code, or extraction failures in the final response.
 
