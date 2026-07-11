@@ -50,7 +50,7 @@ dispatch_id: <parent-generated unique id>
 agent_task_name: <unique task name requested by parent>
 paper_key: <year>_<short-title>
 title: <paper title>
-role_in_survey: <seminal|core|bridge|variant|recent|benchmark>
+role_in_survey: <seminal|core|bridge|variant|recent|survey|benchmark>
 selection_reason: <one compact paragraph>
 venue_and_year: <peer-reviewed venue/year or arXiv-only status>
 paper_url: <url or unknown>
@@ -70,6 +70,8 @@ required_skill_tree_sha256: <deterministic tree hash computed immediately before
 ```
 
 Write this exact packet to `task_packet.yaml` before dispatch, record its SHA-256 in `agent_dispatch_log.md`, and do not let the paper agent modify it. The parent may add short paper-specific questions only through `verification_questions`. Questions must ask what to verify, not provide conclusions that the paper agent is expected to reproduce.
+
+When creating `deliverable_manifest.json`, normalize a task-packet literal `unknown` to JSON `null`; preserve why the value is missing in the corresponding artifact reason or limitation. Do not write the string `unknown` into URI-or-null schema fields.
 
 ## 3. Required Agent Prompt
 
@@ -95,7 +97,8 @@ The paper agent must always create:
 - `analysis.md`: the complete `$paper-deep-review` report, including source inventory, symbol table, technical-claim evidence matrix, evidence loops, code/infra analysis when relevant, limitations, and unresolved questions.
 - `figure_inventory.md`: one row per counted visual with figure/table number, PDF page, source-page dimensions, exact crop bounding box `(x, y, width, height)`, complete caption, local path, linked claim, report section, source URL, and QA status.
 - `agent_handoff.md`: a compact completion record following Section 5.
-- `artifact_manifest.sha256`: generated last and covering every file under `output_folder`, including `task_packet.yaml`, except the manifest itself.
+- `deliverable_manifest.json`: valid against `$paper-deep-review`'s `references/deliverable-schema.json` and consistent with the handoff/checklist/artifacts.
+- `artifact_manifest.sha256`: generated last and covering every file under `output_folder`, including `task_packet.yaml` and `deliverable_manifest.json`, except the hash manifest itself.
 - Source, PDF, extracted text, crops, code, and OpenReview artifacts required by `$paper-deep-review`, or precise blocked/skipped entries in both `review_checklist.md` and `agent_handoff.md`.
 
 When one or more crops exist, the paper agent must create `figures/contact-sheet.png` covering every counted crop and use it for batch triage, then inspect every crop individually at 100% scale. Each crop must contain exactly one numbered figure/table and its full caption, exclude unrelated page content, retain all object labels/panels/footnotes, and normally use only an 8-32 pixel safety margin; reject unrelated whitespace over 5% on any side unless intrinsic to the figure. Record source-page dimensions and the exact crop bounding box. Allow a whole-page crop only for a page-level evidence object or essential cross-page context, and record the exception. Target at least one mechanism visual and one result/ablation/system-evidence visual, and embed/discuss every accepted visual. For each missing visual type, add the exact `visual-evidence-skip` attempts, source-page/search evidence, alternative evidence, and effect on conclusions required by the decision table. If no crop can be produced, do not create a blank placeholder.
@@ -124,6 +127,9 @@ Keep `agent_handoff.md` compact and use these headings:
 - Checklist: review_checklist.md
 - Visual inventory: figure_inventory.md
 - Contact sheet: figures/contact-sheet.png | skipped-with-reason
+- Deliverable manifest: deliverable_manifest.json
+- Deliverable schema validation: <passed | failed | blocked>
+- Deliverable semantic validation: <passed | failed | blocked>
 - Artifact manifest: artifact_manifest.sha256
 - Counted visuals: <mechanism N; evidence N>
 - Evidence loop: pass | fail
@@ -150,7 +156,7 @@ The parent survey agent must inspect files rather than accepting the agent's mes
 
 1. Match `dispatch_id`, agent task name/id, paper key, output folder, context-free spawn record, and filesystem-isolation mode against `agent_dispatch_log.md`.
 2. Confirm `task_packet.yaml` is unchanged from the parent-recorded SHA-256. Recompute the repository skill-tree and contract hashes and match them against the packet and `agent_handoff.md`.
-3. Confirm `review_checklist.md`, `analysis.md`, `figure_inventory.md`, `agent_handoff.md`, and `artifact_manifest.sha256` exist; verify every manifest hash, including `task_packet.yaml`, and ensure every checklist item is classified.
+3. Confirm `review_checklist.md`, `analysis.md`, `figure_inventory.md`, `agent_handoff.md`, `deliverable_manifest.json`, and `artifact_manifest.sha256` exist. Validate the deliverable manifest against the repository paper schema; independently recompute every required semantic check, including visual totals/missing types and provenance hash equality; cross-check it against the frozen handoff/checklist/artifacts; verify every final artifact-manifest hash including the task/deliverable manifests; and ensure every checklist item is classified.
 4. Resolve every local Markdown image link and every inventory path.
 5. If crops exist, use the contact sheet for triage and inspect each crop individually at 100% scale. Confirm exactly one numbered object plus its full caption, complete inventory dimensions/bounding box, tight margins, and no blank, duplicate, clipped, unreadable, captionless, neighboring, or unrelated content. If no crop exists, verify the precise visual blocker, attempts, alternative evidence, and effect on conclusions.
 6. Confirm every accepted mechanism/evidence visual is embedded and analytically discussed. Apply the decision table separately to each missing required visual type, including the exactly-one and zero-visual branches.
@@ -171,7 +177,7 @@ Apply this table in order:
 
 | Condition | Required evidence | Verdict |
 |---|---|---|
-| Task packet, skill/contract hashes, artifact manifest, or write-boundary audit fails | Exact mismatch or missing check | `rejected` |
+| Task packet, skill/contract hashes, deliverable structural/semantic validation, artifact manifest, or write-boundary audit fails | Exact mismatch or missing check | `rejected` |
 | Any checklist item is pending/unclassified; `analysis.md`, claim matrix, evidence loop, inventory, or handoff is missing/unusable | Exact missing item | `rejected` |
 | Primary PDF is unavailable, unreadable, or too incomplete to verify the paper's method and results | Acquisition/extraction attempts and failure evidence | `rejected` |
 | Mechanism visual and result/ablation/system-evidence visual both pass inventory, caption, embedding, discussion, and contact-sheet QA | Two accepted visual types | Continue evaluating other branches |

@@ -23,8 +23,9 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 - [pending] W9 Gain attribution: separate direct, indirect, confounded, and unsupported component-level attribution.
 - [pending] W10 Report: write complete `analysis.md` from `references/markdown-template.md` with inline evidence visuals and limitations.
 - [pending] W11 Generated diagram: use the required document-input path and verify/link the PNG, or record the exact unavailable/failed reason.
-- [pending] D1 Delegated handoff: after W11, write contract-compliant `agent_handoff.md`, or mark standalone invocation with reason.
-- [pending] D2 Artifact manifest: generate and verify `artifact_manifest.sha256` last in delegated runs, or mark standalone invocation with reason.
+- [pending] D1 Delegated handoff: after W11, write the preliminary contract-compliant `agent_handoff.md`, or mark standalone invocation with reason; freeze it before final deliverable hashing.
+- [pending] D2 Deliverable manifest: validate a preliminary `deliverable_manifest.json`, finalize/freeze checklist and handoff, recompute hashes, then pass final structural and semantic validation with no errors.
+- [pending] D3 Artifact manifest: in delegated runs, preflight-generate/verify `artifact_manifest.sha256` before the freeze, then regenerate/verify it last after the final deliverable manifest; do not edit covered files afterward. Mark standalone invocation with reason.
 
 ## Quality Checks
 
@@ -41,9 +42,10 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 - [pending] Q11 Checkpoint/config claims come from inspected metadata or are marked unverified.
 - [pending] Q12 Failed tests, extraction tools, downloads, access, and metadata checks are recorded with their effect on conclusions.
 - [pending] Q13 Delegated runs preserved the task packet, produced a schema-compliant handoff and complete artifact manifest, and passed the parent-provided write-isolation mode or reported suspected out-of-folder edits; standalone runs classify this item with reason.
+- [pending] Q14 `deliverable_manifest.json` passes structural and semantic validation and agrees with artifact hashes, visual counts/missing types, evidence status, invocation mode/provenance, frozen checklist/handoff, and limitations.
 
 ## Final Classification
 
-- [pending] F1 `analysis.md` and `figure_inventory.md` exist and agree on counted visuals; `figures/contact-sheet.png` exists when crops exist, otherwise precise visual-block evidence exists.
+- [pending] F1 `analysis.md`, `figure_inventory.md`, and `deliverable_manifest.json` exist and agree on counted visuals; `figures/contact-sheet.png` exists when crops exist, otherwise precise visual-block evidence exists.
 - [pending] F2 Every workflow and quality item above is `done`, `blocked`, or `skipped-with-reason`; none remains `pending`.
 - [pending] F3 The final response/handoff states every material limitation and does not declare blocked evidence complete.

@@ -1,0 +1,436 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-wushu.local/schemas/paper-deep-review-deliverable-1.0.0.json",
+  "title": "Paper Deep Review Deliverable Manifest",
+  "description": "Machine-readable manifest for one paper-deep-review delivery.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "deliverable_type",
+    "invocation_mode",
+    "paper",
+    "completion_status",
+    "schema_validation",
+    "semantic_validation",
+    "artifacts",
+    "visual_evidence",
+    "evidence_checks",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0" },
+    "deliverable_type": { "const": "paper-deep-review" },
+    "invocation_mode": { "enum": ["standalone", "delegated"] },
+    "paper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paper_key", "title", "venue_and_year", "paper_url"],
+      "properties": {
+        "paper_key": { "type": "string", "minLength": 1 },
+        "title": { "type": "string", "minLength": 1 },
+        "venue_and_year": { "type": "string", "minLength": 1 },
+        "paper_url": { "type": ["string", "null"], "format": "uri" }
+      }
+    },
+    "completion_status": { "enum": ["complete", "blocked"] },
+    "schema_validation": { "$ref": "#/$defs/schemaValidation" },
+    "semantic_validation": { "$ref": "#/$defs/paperSemanticValidation" },
+    "artifacts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paper_pdf",
+        "analysis",
+        "review_checklist",
+        "figure_inventory",
+        "contact_sheet",
+        "source_archive",
+        "code_snapshot",
+        "openreview_reviews",
+        "generated_diagram",
+        "task_packet",
+        "agent_handoff",
+        "artifact_manifest_path"
+      ],
+      "properties": {
+        "paper_pdf": { "$ref": "#/$defs/artifact" },
+        "analysis": { "$ref": "#/$defs/artifact" },
+        "review_checklist": { "$ref": "#/$defs/artifact" },
+        "figure_inventory": { "$ref": "#/$defs/artifact" },
+        "contact_sheet": { "$ref": "#/$defs/artifact" },
+        "source_archive": { "$ref": "#/$defs/artifact" },
+        "code_snapshot": { "$ref": "#/$defs/artifact" },
+        "openreview_reviews": { "$ref": "#/$defs/artifact" },
+        "generated_diagram": { "$ref": "#/$defs/artifact" },
+        "task_packet": { "$ref": "#/$defs/artifact" },
+        "agent_handoff": { "$ref": "#/$defs/artifact" },
+        "artifact_manifest_path": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "visual_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mechanism_count",
+        "result_or_system_count",
+        "counted_total",
+        "missing_types",
+        "inventory_fields_complete",
+        "contact_sheet_qa",
+        "individual_crop_qa"
+      ],
+      "properties": {
+        "mechanism_count": { "type": "integer", "minimum": 0 },
+        "result_or_system_count": { "type": "integer", "minimum": 0 },
+        "counted_total": { "type": "integer", "minimum": 0 },
+        "missing_types": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["mechanism", "result-or-system"] }
+        },
+        "inventory_fields_complete": { "type": "boolean" },
+        "contact_sheet_qa": { "enum": ["passed", "blocked", "not-applicable"] },
+        "individual_crop_qa": { "enum": ["passed", "blocked", "not-applicable"] }
+      }
+    },
+    "evidence_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "claim_matrix",
+        "symbol_table",
+        "evidence_loop",
+        "code_cross_check",
+        "openreview_cross_check",
+        "infrastructure_analysis",
+        "gain_attribution"
+      ],
+      "properties": {
+        "claim_matrix": { "$ref": "#/$defs/checkStatus" },
+        "symbol_table": { "$ref": "#/$defs/checkStatus" },
+        "evidence_loop": { "$ref": "#/$defs/checkStatus" },
+        "code_cross_check": { "$ref": "#/$defs/checkStatus" },
+        "openreview_cross_check": { "$ref": "#/$defs/checkStatus" },
+        "infrastructure_analysis": { "$ref": "#/$defs/checkStatus" },
+        "gain_attribution": { "$ref": "#/$defs/checkStatus" }
+      }
+    },
+    "delegated_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dispatch_id",
+        "agent_task_name",
+        "task_packet_sha256",
+        "skill_tree_sha256",
+        "agent_contract_sha256"
+      ],
+      "properties": {
+        "dispatch_id": { "type": "string", "minLength": 1 },
+        "agent_task_name": { "type": "string", "minLength": 1 },
+        "task_packet_sha256": { "$ref": "#/$defs/sha256" },
+        "skill_tree_sha256": { "$ref": "#/$defs/sha256" },
+        "agent_contract_sha256": { "$ref": "#/$defs/sha256" }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/limitation" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "invocation_mode": { "const": "delegated" } } },
+      "then": {
+        "required": ["delegated_provenance"],
+        "properties": {
+          "artifacts": {
+            "properties": {
+              "task_packet": { "$ref": "#/$defs/presentArtifact" },
+              "agent_handoff": { "$ref": "#/$defs/presentArtifact" },
+              "artifact_manifest_path": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      },
+      "else": {
+        "not": { "required": ["delegated_provenance"] },
+        "properties": {
+          "artifacts": {
+            "properties": {
+              "task_packet": { "$ref": "#/$defs/notApplicableArtifact" },
+              "agent_handoff": { "$ref": "#/$defs/notApplicableArtifact" },
+              "artifact_manifest_path": { "type": "null" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "completion_status": { "const": "complete" } } },
+      "then": {
+        "properties": {
+          "schema_validation": {
+            "properties": { "status": { "const": "passed" } }
+          },
+          "semantic_validation": {
+            "properties": {
+              "status": { "const": "passed" },
+              "checks": {
+                "properties": {
+                  "artifact_paths_and_hashes": { "const": true },
+                  "visual_count_sum": { "const": true },
+                  "missing_visual_types": { "const": true },
+                  "provenance_hash_equality": { "const": true },
+                  "checklist_manifest_consistency": { "const": true }
+                }
+              }
+            }
+          },
+          "artifacts": {
+            "properties": {
+              "paper_pdf": { "$ref": "#/$defs/presentArtifact" },
+              "analysis": { "$ref": "#/$defs/presentArtifact" },
+              "review_checklist": { "$ref": "#/$defs/presentArtifact" },
+              "figure_inventory": { "$ref": "#/$defs/presentArtifact" }
+            }
+          },
+          "evidence_checks": {
+            "properties": {
+              "claim_matrix": { "const": "passed" },
+              "symbol_table": { "const": "passed" },
+              "evidence_loop": { "const": "passed" },
+              "infrastructure_analysis": { "const": "passed" },
+              "gain_attribution": { "const": "passed" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "visual_evidence": {
+            "properties": { "counted_total": { "minimum": 1 } },
+            "required": ["counted_total"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "artifacts": {
+            "properties": { "contact_sheet": { "$ref": "#/$defs/presentArtifact" } }
+          },
+          "visual_evidence": {
+            "properties": {
+              "inventory_fields_complete": { "const": true },
+              "contact_sheet_qa": { "const": "passed" },
+              "individual_crop_qa": { "const": "passed" }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "artifacts": {
+            "properties": { "contact_sheet": { "$ref": "#/$defs/notApplicableArtifact" } }
+          },
+          "visual_evidence": {
+            "properties": {
+              "contact_sheet_qa": { "const": "not-applicable" },
+              "individual_crop_qa": { "const": "not-applicable" }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "visual_evidence": {
+            "properties": { "mechanism_count": { "const": 0 } },
+            "required": ["mechanism_count"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "visual_evidence": {
+            "properties": {
+              "missing_types": { "contains": { "const": "mechanism" } }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "visual_evidence": {
+            "properties": {
+              "counted_total": { "minimum": 1 },
+              "missing_types": { "not": { "contains": { "const": "mechanism" } } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "visual_evidence": {
+            "properties": { "result_or_system_count": { "const": 0 } },
+            "required": ["result_or_system_count"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "visual_evidence": {
+            "properties": {
+              "missing_types": { "contains": { "const": "result-or-system" } }
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "visual_evidence": {
+            "properties": {
+              "counted_total": { "minimum": 1 },
+              "missing_types": { "not": { "contains": { "const": "result-or-system" } } }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "visual_evidence": {
+            "properties": { "counted_total": { "const": 0 } },
+            "required": ["counted_total"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "visual_evidence": {
+            "properties": {
+              "mechanism_count": { "const": 0 },
+              "result_or_system_count": { "const": 0 }
+            }
+          },
+          "limitations": { "minItems": 1 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "artifact": {
+      "oneOf": [
+        { "$ref": "#/$defs/presentArtifact" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["status", "path", "sha256", "reason"],
+          "properties": {
+            "status": { "enum": ["blocked", "skipped-with-reason", "not-applicable"] },
+            "path": { "type": "null" },
+            "sha256": { "type": "null" },
+            "reason": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "presentArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "path", "sha256", "reason"],
+      "properties": {
+        "status": { "const": "present" },
+        "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)", "description": "Relative file or directory path." },
+        "sha256": { "allOf": [{ "$ref": "#/$defs/sha256" }], "description": "File SHA-256 or deterministic tree SHA-256 for a directory." },
+        "reason": { "type": "null" }
+      }
+    },
+    "notApplicableArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "path", "sha256", "reason"],
+      "properties": {
+        "status": { "const": "not-applicable" },
+        "path": { "type": "null" },
+        "sha256": { "type": "null" },
+        "reason": { "type": "string", "minLength": 1 }
+      }
+    },
+    "checkStatus": {
+      "enum": ["passed", "blocked", "skipped-with-reason", "not-applicable"]
+    },
+    "schemaValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "validator", "errors"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "blocked"] },
+        "validator": { "type": "string", "minLength": 1 },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "passed" } } },
+          "then": { "properties": { "errors": { "maxItems": 0 } } }
+        }
+      ]
+    },
+    "paperSemanticValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "validator", "checks", "errors"],
+      "properties": {
+        "status": { "enum": ["passed", "failed", "blocked"] },
+        "validator": { "type": "string", "minLength": 1 },
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "artifact_paths_and_hashes",
+            "visual_count_sum",
+            "missing_visual_types",
+            "provenance_hash_equality",
+            "checklist_manifest_consistency"
+          ],
+          "properties": {
+            "artifact_paths_and_hashes": { "type": "boolean" },
+            "visual_count_sum": { "type": "boolean" },
+            "missing_visual_types": { "type": "boolean" },
+            "provenance_hash_equality": { "type": "boolean" },
+            "checklist_manifest_consistency": { "type": "boolean" }
+          }
+        },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "passed" } } },
+          "then": { "properties": { "errors": { "maxItems": 0 } } }
+        }
+      ]
+    },
+    "limitation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["requirement", "status", "reason", "effect_on_conclusions"],
+      "properties": {
+        "requirement": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["blocked", "skipped-with-reason"] },
+        "reason": { "type": "string", "minLength": 1 },
+        "effect_on_conclusions": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

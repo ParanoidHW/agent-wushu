@@ -19,6 +19,7 @@ Treat this skill as a required workflow rather than optional guidance.
 - Create paper-local `figure_inventory.md`; when one or more crops exist, create and inspect `figures/contact-sheet.png`. If no crop can be produced, record the precise visual blocker and alternative evidence instead of creating a blank placeholder.
 - When invoked by a parent agent, read the supplied agent contract completely, respect its folder ownership and input boundaries, and write the required `agent_handoff.md`.
 - In delegated runs, verify parent-owned `task_packet.yaml` and do not modify it. Verify the complete skill-tree hash and agent-contract hash before analysis.
+- After all analysis and diagram work, finalize delivery with the two-pass freeze protocol below. Validate both JSON Schema structure and the manifest's required semantic checks; set the delivery to `blocked` instead of claiming completion when either validation fails or cannot run.
 - Classify unavailable PDFs, source, code, reviews, model metadata, tools, API keys, and network access precisely. Do not silently weaken the workflow or substitute unsupported claims.
 - Before reporting completion, reread `review_checklist.md` and verify that no mandatory item is pending or unclassified. Completion is determined by artifacts and checks, not by a prose summary.
 
@@ -31,6 +32,7 @@ Treat this skill as a required workflow rather than optional guidance.
    - `extracted_text/`
    - `review_checklist.md`
    - `figure_inventory.md`
+   - `deliverable_manifest.json`
    - `figures/page_png/`
    - `figures/crops/`
    - `figures/contact-sheet.png` when one or more crops exist
@@ -149,13 +151,22 @@ Treat this skill as a required workflow rather than optional guidance.
    - Confirm the inserted image path is relative to `analysis.md` and does not break Markdown rendering.
    - Do not replace paper figures or factual plots with generated art. Keep generated diagrams clearly separate from paper-derived evidence.
 
-After Workflow step 11, delegated runs must write `agent_handoff.md` only after `analysis.md`, diagram handling, and all acceptance artifacts are verified. Keep it compact: record status, dispatch/task-packet/skill-tree/contract provenance, artifact paths, synthesis claims with evidence locations, and blocked/skipped items; do not include hidden chain-of-thought. Generate `artifact_manifest.sha256` last for every file under the assigned paper folder except the manifest itself, including the unchanged parent-owned `task_packet.yaml`.
+After Workflow step 11, use this freeze protocol:
+
+1. Write the delegated `agent_handoff.md` when applicable, then create a preliminary `deliverable_manifest.json` and run Draft 2020-12 structural validation plus every `semantic_validation` check required by the schema.
+2. In delegated runs, generate and verify a preliminary `artifact_manifest.sha256`. Use these preliminary results to finalize every checklist/handoff status, then freeze `review_checklist.md`, `agent_handoff.md`, `analysis.md`, inventories, figures, and other referenced artifacts.
+3. Recompute all frozen artifact hashes in `deliverable_manifest.json`, rerun structural and semantic validation, and freeze the final deliverable manifest. A `passed` validation must have an empty error list.
+4. In delegated runs, regenerate and verify `artifact_manifest.sha256` last so it covers the frozen task packet, checklist, handoff, deliverable manifest, and all other files except itself. Do not edit any covered file afterward; on failure, restart finalization from step 1.
+
+Keep the handoff compact: record status, dispatch/task-packet/skill-tree/contract provenance, artifact paths, synthesis claims with evidence locations, and blocked/skipped items; do not include hidden chain-of-thought. Normalize task-packet literal `unknown` values to JSON `null` in `deliverable_manifest.json` and preserve the reason in the corresponding absent/blocked artifact entry.
 
 ## Quality Checks
 
 Before finishing:
 
 - Confirm `review_checklist.md` exists, was updated throughout the run, and has no pending or unclassified mandatory items.
+- Confirm `deliverable_manifest.json` exists, conforms to `references/deliverable-schema.json`, and agrees with artifact paths, hashes, visual counts, evidence status, invocation mode, and limitations.
+- Confirm `semantic_validation` passed: artifact paths/hashes resolve, visual counts and missing types agree, delegated provenance hashes match, and the frozen checklist/handoff agree with the final manifest.
 - Confirm `figure_inventory.md` exists; if crops exist, confirm `figures/contact-sheet.png` exists and every counted crop has a complete inventory row and reviewed QA status. If no crop exists, confirm the precise blocker and alternative evidence are recorded.
 - Confirm all Markdown image links resolve.
 - Use the contact sheet for crop triage, then open every selected crop individually at 100% scale. Confirm exactly one numbered figure/table with its full caption, recorded source-page dimensions/bounding box, tight margins, and no next paragraph, page chrome, section heading, neighboring content, unrelated equation, excessive whitespace, or truncated caption.
@@ -174,6 +185,7 @@ Before finishing:
 ## Resources
 
 - `references/markdown-template.md`: reusable Chinese Markdown structure, including the standard paper review sections and "解读问题/待验证清单".
+- `references/deliverable-schema.json`: Draft 2020-12 schema for the required paper-level `deliverable_manifest.json`.
 - `references/review-checklist-template.md`: mandatory per-paper execution and quality checklist; copy it into the paper folder before substantive analysis and preserve every item.
 - `scripts/extract_pdf_assets.py`: optional helper to extract PDF text and render page PNGs for offline papers.
 - `scripts/crop_pdf_figures.py`: optional helper to batch crop figures/tables from page PNGs and create a contact sheet for QA.

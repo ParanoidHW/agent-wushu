@@ -21,6 +21,7 @@ Before starting substantive work:
 - Convert Workflow sections 1-8 and the Quality Checks into concrete checklist items.
 - Mark each item as `pending`, `done`, `blocked`, or `skipped-with-reason`.
 - Keep the checklist updated after each phase and before any final response.
+- After all paper, synthesis, diagram, and optional presentation work, create `deliverable_manifest.json` conforming to `references/deliverable-schema.json`. Run Draft 2020-12 structural validation and every required `semantic_validation` cross-check. Record errors and do not declare completion when either validation fails or cannot run.
 
 Do not silently substitute different artifacts for required outputs:
 
@@ -75,6 +76,7 @@ Create one workspace folder per survey:
 ```text
 ai_algorithm_survey_<field_slug>/
 ├── execution_checklist.md
+├── deliverable_manifest.json
 ├── search_log.md
 ├── github_sources.md
 ├── impact_signals.md
@@ -94,6 +96,7 @@ ai_algorithm_survey_<field_slug>/
 │       ├── review_checklist.md
 │       ├── figure_inventory.md
 │       ├── agent_handoff.md
+│       ├── deliverable_manifest.json
 │       ├── artifact_manifest.sha256
 │       ├── figures/
 │       │   ├── page_png/
@@ -280,7 +283,8 @@ Each paper agent must:
 - complete the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop,
 - preserve paper/source/code URLs and commit hashes when code is inspected,
 - write `agent_handoff.md` using the contract schema, with every incomplete requirement classified as blocked or skipped-with-reason,
-- generate `artifact_manifest.sha256` last for all files in the assigned folder except the manifest itself; it must include the unchanged `task_packet.yaml`.
+- write and validate `deliverable_manifest.json` against the repository `$paper-deep-review` deliverable schema,
+- generate `artifact_manifest.sha256` last for all files in the assigned folder except the hash manifest itself; it must include the unchanged `task_packet.yaml` and validated `deliverable_manifest.json`.
 
 If `$paper-deep-review` is unavailable, stop and tell the user it must be installed or provided before the batch survey can meet the requested standard.
 
@@ -334,6 +338,14 @@ If `$openrouter-icu-image` or `OPENROUTER_ICU_API_KEY` is unavailable, skip gene
 
 Record the exact Section 8 outcome in `execution_checklist.md`: command path or invocation method, whether `responses-doc --input-file synthesis.md` was used, output image path, link insertion status, or the precise reason generation was skipped. Do not mark Section 8 as done for non-PNG substitutes.
 
+After Section 8 and any requested presentation are complete, finalize the survey delivery in two passes:
+
+1. Write a preliminary root `deliverable_manifest.json` from parent-accepted paper manifests and dispatch records; run Draft 2020-12 validation and all semantic checks.
+2. Use the preliminary result to finalize `execution_checklist.md`, then freeze every referenced global and per-paper artifact.
+3. Recompute frozen artifact hashes in the deliverable manifest, rerun structural and semantic validation, and freeze the final manifest. A `passed` validation must have an empty error list; do not modify referenced artifacts afterward without restarting finalization.
+
+Semantic validation must confirm actual relative paths and hashes, selected-paper count equals the paper array length, paper keys/folders/dispatch IDs and runtime agent task/IDs are unique, every paper entry matches its accepted paper manifest and dispatch record, global visual totals match paper manifests plus the merged inventory, and the frozen checklist agrees with the final manifest.
+
 ## Presentation Deliverables
 
 Apply this section whenever the user requests a PPT, slide deck, or presentation in addition to the Markdown survey:
@@ -350,6 +362,8 @@ Apply this section whenever the user requests a PPT, slide deck, or presentation
 Before finishing:
 
 - Confirm `execution_checklist.md` exists, was updated after each major phase, and has no unclassified mandatory items.
+- Confirm `deliverable_manifest.json` exists, conforms to `references/deliverable-schema.json`, and agrees with all global artifacts, per-paper manifests/verdicts, visual QA, agent isolation, synthesis coverage, presentation state, and limitations.
+- Confirm survey `semantic_validation` passed with empty errors for artifact hashes, selected-paper count, paper and runtime-agent identity uniqueness, paper-manifest/dispatch reconciliation, visual aggregation, and frozen-checklist consistency.
 - Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, `agent_dispatch_log.md`, `figure_inventory.md`, each selected paper `analysis.md`, and `synthesis.md` exist; require `figures/contact-sheet.png` when accepted crops exist, otherwise require precise survey-level no-crop evidence.
 - Confirm search covered general search, GitHub/awesome repositories, arXiv, and relevant top venues/journals when available.
 - Confirm candidate papers record `affiliations` and `affiliation_evidence`, using explicit caveats where affiliations are unavailable.
@@ -375,6 +389,7 @@ Before finishing:
 ## Resources
 
 - `references/synthesis-template.md`: Chinese structure for the final cross-paper survey and trend synthesis.
+- `references/deliverable-schema.json`: Draft 2020-12 schema for the required survey-level `deliverable_manifest.json`.
 - `references/paper-review-agent-contract.md`: mandatory isolated sub-agent task packet, ownership rules, artifact schema, and parent acceptance checks for each selected paper.
 - `$paper-deep-review`: required per-paper workflow and source for original-paper figures, formulas, implementation evidence, and limitations.
 - `$pptx` or another applicable presentation skill: required when the user requests an editable presentation deliverable.
