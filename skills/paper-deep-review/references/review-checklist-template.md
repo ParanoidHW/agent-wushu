@@ -1,0 +1,49 @@
+# Paper Deep Review Execution Checklist
+
+Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace each `pending` status as work progresses. Preserve every item and add the exact artifact path, evidence, or reason after the status.
+
+## Workflow
+
+- [pending] W1 Folder: create/reuse one paper folder and required artifact layout.
+- [pending] W1 Delegated input: verify `task_packet.yaml`, skill-tree hash, and agent-contract hash without modifying the packet, or mark standalone invocation with reason.
+- [pending] W2 Primary sources: acquire or classify the PDF, source archive, official paper page, and metadata.
+- [pending] W2 Public reviews: acquire and preserve OpenReview evidence, or record why it is unavailable/not applicable.
+- [pending] W2 Code: acquire the official/selected repository and record remote URL plus commit hash, or classify its absence.
+- [pending] W3 Text: extract searchable paper text and retain the extraction path/tool evidence.
+- [pending] W3 Visuals: extract readable paper figures/tables with complete captions and narrow boundaries.
+- [pending] W3 Inventory: complete `figure_inventory.md` for every counted visual.
+- [pending] W3 Visual QA: when crops exist, generate and inspect `figures/contact-sheet.png` and fix/reject every failed crop; otherwise record precise visual-block and alternative-evidence details.
+- [pending] W4 Evidence discipline: map important claims to sections, equations, figures, tables, appendices, or code.
+- [pending] W4 Claim matrix: classify every claimed technical point as direct, indirect, confounded, missing, or otherwise precisely qualified evidence.
+- [pending] W4 Symbols and terminology: complete the symbol table and paper-specific terminology/data-construction clarification.
+- [pending] W5 Related work: compare the paper's relevant method groups by mechanism, benefit, limitation, and fairness.
+- [pending] W6 OpenReview cross-check: test public review claims against paper/rebuttal/code evidence, or classify unavailability.
+- [pending] W7 Infrastructure: analyze relevant compute, memory, bandwidth/utilization, interconnect, runtime, data types, and CPU/GPU/NPU heterogeneity.
+- [pending] W8 Code/config: inspect relevant architecture, loss, data, evaluation, runtime, checkpoint, and serving paths, or classify unavailable evidence.
+- [pending] W9 Gain attribution: separate direct, indirect, confounded, and unsupported component-level attribution.
+- [pending] W10 Report: write complete `analysis.md` from `references/markdown-template.md` with inline evidence visuals and limitations.
+- [pending] W11 Generated diagram: use the required document-input path and verify/link the PNG, or record the exact unavailable/failed reason.
+- [pending] D1 Delegated handoff: after W11, write contract-compliant `agent_handoff.md`, or mark standalone invocation with reason.
+- [pending] D2 Artifact manifest: generate and verify `artifact_manifest.sha256` last in delegated runs, or mark standalone invocation with reason.
+
+## Quality Checks
+
+- [pending] Q1 All local Markdown image links resolve.
+- [pending] Q2 Every accepted crop has a full caption/title, readable resolution, narrow boundaries, and passed contact-sheet QA; a no-crop run has precise visual-block evidence and no blank placeholder.
+- [pending] Q3 Every key number maps to paper evidence or a clearly labeled calculation.
+- [pending] Q4 Every claimed technical point has an evidence classification; unsupported claims are explicit.
+- [pending] Q5 Generated-diagram handling used `responses-doc --input-file analysis.md` and produced a linked PNG, or has a precise limitation.
+- [pending] Q6 Every code claim cites a local path and commit hash when code is available.
+- [pending] Q7 The symbol table covers every variable used in key formulas, metrics, and tables.
+- [pending] Q8 Ambiguous mechanism terms are qualified by stage and paper/code meaning.
+- [pending] Q9 OpenReview reviews, decision, rebuttal, and discussion were evidence-cross-checked when publicly accessible.
+- [pending] Q10 Gain-attribution statements use matched evidence or are explicitly labeled rough/inferred.
+- [pending] Q11 Checkpoint/config claims come from inspected metadata or are marked unverified.
+- [pending] Q12 Failed tests, extraction tools, downloads, access, and metadata checks are recorded with their effect on conclusions.
+- [pending] Q13 Delegated runs preserved the task packet, produced a schema-compliant handoff and complete artifact manifest, and passed the parent-provided write-isolation mode or reported suspected out-of-folder edits; standalone runs classify this item with reason.
+
+## Final Classification
+
+- [pending] F1 `analysis.md` and `figure_inventory.md` exist and agree on counted visuals; `figures/contact-sheet.png` exists when crops exist, otherwise precise visual-block evidence exists.
+- [pending] F2 Every workflow and quality item above is `done`, `blocked`, or `skipped-with-reason`; none remains `pending`.
+- [pending] F3 The final response/handoff states every material limitation and does not declare blocked evidence complete.

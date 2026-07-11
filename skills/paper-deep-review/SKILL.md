@@ -1,6 +1,6 @@
 ---
 name: paper-deep-review
-description: Rigorous academic paper and technical-report review workflow. Use when Codex is asked to deeply read, analyze, summarize, or structure a paper, arXiv article, OpenReview submission, PDF, LaTeX source, technical whitepaper, or model/system report; produce Markdown with figures, formulas, evidence chains, related-work comparison, OpenReview public-review analysis when available, infrastructure analysis including data types, bandwidth utilization, and CPU/GPU/NPU heterogeneity, and optional source-code cross-checks.
+description: Rigorous academic paper and technical-report review workflow. Use when Codex is asked to deeply read, analyze, summarize, or structure one paper, arXiv article, OpenReview submission, PDF, LaTeX source, technical whitepaper, or model/system report, including isolated per-paper sub-agent tasks; produce an auditable Markdown review with classified execution checks, original figures, formulas, evidence chains, related-work comparison, OpenReview public-review analysis when available, infrastructure analysis including data types, bandwidth utilization, and CPU/GPU/NPU heterogeneity, and optional source-code cross-checks.
 ---
 
 # Paper Deep Review
@@ -9,17 +9,36 @@ description: Rigorous academic paper and technical-report review workflow. Use w
 
 Use this skill to turn a paper or technical report into a rigorous Markdown review grounded in the source document, figures/tables, related work, system implications, and implementation code when available.
 
+## Mandatory Execution Contract
+
+Treat this skill as a required workflow rather than optional guidance.
+
+- Review exactly one paper per invocation. In delegated runs, do not expand into a multi-paper survey.
+- Before substantive analysis, copy `references/review-checklist-template.md` to `review_checklist.md` in the paper folder. Keep every Workflow and Quality Check item and mark it `pending`, `done`, `blocked`, or `skipped-with-reason`.
+- Update the checklist after acquisition, extraction/visual QA, evidence analysis, code/OpenReview checks, report writing, and generated-diagram handling.
+- Create paper-local `figure_inventory.md`; when one or more crops exist, create and inspect `figures/contact-sheet.png`. If no crop can be produced, record the precise visual blocker and alternative evidence instead of creating a blank placeholder.
+- When invoked by a parent agent, read the supplied agent contract completely, respect its folder ownership and input boundaries, and write the required `agent_handoff.md`.
+- In delegated runs, verify parent-owned `task_packet.yaml` and do not modify it. Verify the complete skill-tree hash and agent-contract hash before analysis.
+- Classify unavailable PDFs, source, code, reviews, model metadata, tools, API keys, and network access precisely. Do not silently weaken the workflow or substitute unsupported claims.
+- Before reporting completion, reread `review_checklist.md` and verify that no mandatory item is pending or unclassified. Completion is determined by artifacts and checks, not by a prose summary.
+
 ## Workflow
 
 1. **Create or reuse a paper folder.** Use `<paper-id>_<short-title>` when no folder exists; reuse the user-provided folder for offline papers. Keep materials under that folder:
    - `paper.pdf` or original PDF name
+   - `task_packet.yaml` when supplied by a parent agent
    - `source/` for LaTeX/source archives when available
    - `extracted_text/`
+   - `review_checklist.md`
+   - `figure_inventory.md`
    - `figures/page_png/`
    - `figures/crops/`
+   - `figures/contact-sheet.png` when one or more crops exist
    - `figures/generated/` for optional generated analysis diagrams
    - `code/<repo-name>/`
    - `openreview_reviews.md` when public OpenReview reviews/discussion exist
+   - `agent_handoff.md` when required by a parent-agent contract
+   - `artifact_manifest.sha256` when required by a parent-agent contract
    - `analysis.md`
 
 2. **Acquire source material.**
@@ -40,6 +59,8 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
      - Preserve enough resolution for axis labels, legends, table entries, and caption text to be readable at normal Markdown viewing width. Re-render pages at higher DPI before accepting blurry crops.
      - Name crops by source and semantic target, for example `fig3_method_caption.png` or `table2_main_results_caption.png`, so the file name signals that the caption is included.
    - For every figure embedded in Markdown, verify it includes the intended plot/table and full caption/title, has narrow clean boundaries, and excludes unrelated surrounding text.
+   - Record every counted crop in `figure_inventory.md` with paper title, figure/table number, PDF page, complete caption, local path, linked claim, report section, source URL, and QA status.
+   - Generate `figures/contact-sheet.png` after cropping, inspect every counted visual, and record the result in both the inventory and `review_checklist.md`. If no crop exists, do not generate an empty contact sheet; record the exact visual-evidence skip instead.
 
 4. **Read with evidence discipline.**
    - Map every important claim to a paper section, figure, table, appendix, or code path.
@@ -125,10 +146,14 @@ Use this skill to turn a paper or technical report into a rigorous Markdown revi
    - Confirm the inserted image path is relative to `analysis.md` and does not break Markdown rendering.
    - Do not replace paper figures or factual plots with generated art. Keep generated diagrams clearly separate from paper-derived evidence.
 
+After Workflow step 11, delegated runs must write `agent_handoff.md` only after `analysis.md`, diagram handling, and all acceptance artifacts are verified. Keep it compact: record status, dispatch/task-packet/skill-tree/contract provenance, artifact paths, synthesis claims with evidence locations, and blocked/skipped items; do not include hidden chain-of-thought. Generate `artifact_manifest.sha256` last for every file under the assigned paper folder except the manifest itself, including the unchanged parent-owned `task_packet.yaml`.
+
 ## Quality Checks
 
 Before finishing:
 
+- Confirm `review_checklist.md` exists, was updated throughout the run, and has no pending or unclassified mandatory items.
+- Confirm `figure_inventory.md` exists; if crops exist, confirm `figures/contact-sheet.png` exists and every counted crop has a complete inventory row and reviewed QA status. If no crop exists, confirm the precise blocker and alternative evidence are recorded.
 - Confirm all Markdown image links resolve.
 - Review all crops in a contact sheet or individually for full captions/titles and narrow clean boundaries; fix crops that include the next paragraph, page chrome, neighboring content, excessive whitespace, or any truncated caption.
 - Confirm every key number in the review maps to a paper section/table/figure or a clearly stated calculation.
@@ -140,11 +165,13 @@ Before finishing:
 - For OpenReview papers, confirm public reviews/meta-review/decision/rebuttal were checked when accessible, saved or summarized in `openreview_reviews.md`, and cross-checked against paper content, appendix, rebuttal, experiments, and code before drawing conclusions.
 - Confirm gain-attribution statements are supported by matched ablations or explicitly marked as rough/inferred decompositions.
 - Confirm checkpoint/config claims are grounded in inspected metadata or clearly marked as unverified.
+- In delegated runs, confirm `agent_handoff.md` follows the supplied schema, every synthesis claim points to exact evidence, and `artifact_manifest.sha256` covers all files except itself. Report any suspected out-of-folder edit to the parent; do not self-certify filesystem read isolation.
 - If tests or extraction tools could not run, state that limitation in the final response.
 
 ## Resources
 
 - `references/markdown-template.md`: reusable Chinese Markdown structure, including the standard paper review sections and "解读问题/待验证清单".
+- `references/review-checklist-template.md`: mandatory per-paper execution and quality checklist; copy it into the paper folder before substantive analysis and preserve every item.
 - `scripts/extract_pdf_assets.py`: optional helper to extract PDF text and render page PNGs for offline papers.
 - `scripts/crop_pdf_figures.py`: optional helper to batch crop figures/tables from page PNGs and create a contact sheet for QA.
 - `$openrouter-icu-image`: optional post-processing skill for generating a high-quality flat technical analysis diagram from the completed `analysis.md`.

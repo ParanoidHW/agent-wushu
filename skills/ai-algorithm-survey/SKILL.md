@@ -1,13 +1,13 @@
 ---
 name: ai-algorithm-survey
-description: Search, select, deep-review, and synthesize papers for a specific AI algorithm field. Use when the user provides an AI algorithm/topic/domain and wants literature discovery through search engines, arXiv, GitHub/awesome paper lists, and top AI conferences or journals such as CVPR, ICML, ICLR, NeurIPS, AAAI, TPAMI, TIP, IROS, ICRA, RA-L, with paper affiliations, repository popularity, citation/cross-reference frequency, original-paper figure evidence, implementation details, and high-value paper signals recorded, then wants each key paper analyzed with $paper-deep-review and a final cross-paper lineage, relationship, trend summary, or presentation.
+description: Search, select, deep-review, and synthesize papers for a specific AI algorithm field. Use when the user provides an AI algorithm/topic/domain and wants literature discovery through search engines, arXiv, GitHub/awesome paper lists, and top AI conferences or journals such as CVPR, ICML, ICLR, NeurIPS, AAAI, TPAMI, TIP, IROS, ICRA, RA-L, with paper affiliations, repository popularity, citation/cross-reference frequency, original-paper figure evidence, implementation details, and high-value paper signals recorded; orchestrate one isolated $paper-deep-review sub-agent per selected paper, then produce a cross-paper lineage, relationship, trend summary, or presentation.
 ---
 
 # AI Algorithm Survey
 
 ## Overview
 
-Use this skill to turn a user-specified AI algorithm field into a traceable literature survey: search broadly, select the most relevant papers, run `$paper-deep-review` on each selected paper, then synthesize the technical lineage and evolution trend across the works.
+Use this skill to turn a user-specified AI algorithm field into a traceable literature survey: search broadly, select the most relevant papers, delegate each selected paper to an isolated sub-agent running `$paper-deep-review`, validate its artifacts, then synthesize the technical lineage and evolution trend across the works.
 
 Default output language is Chinese unless the user asks otherwise. Keep paper titles, method names, datasets, formulas, and code identifiers in their original language when that preserves precision.
 
@@ -25,23 +25,38 @@ Before starting substantive work:
 Do not silently substitute different artifacts for required outputs:
 
 - A short summary is not a substitute for `$paper-deep-review`.
+- Running all selected-paper reviews in the parent survey context is not a substitute for isolated per-paper agents when sub-agents are available.
 - A generated SVG, hand-written diagram, prompt-only image, or image generated from pasted/summarized Markdown is not a substitute for Section 8.
 - If `$openrouter-icu-image` is installed and `OPENROUTER_ICU_API_KEY` is available, Section 8 must produce `figures/generated/survey-trends-infra.png` from `responses-doc --input-file synthesis.md`.
 - If a required tool, API key, PDF, source, code repository, or network access is unavailable, record the exact limitation in `execution_checklist.md`, the relevant report file, and the final response.
 
 Before final response, reread `execution_checklist.md` and verify every mandatory item is either completed or explicitly blocked/skipped with evidence. Do not declare the survey complete while any mandatory item remains unclassified.
 
+### Agent Isolation Contract
+
+Read `references/paper-review-agent-contract.md` completely before dispatching selected papers. Treat it as the required task and acceptance contract for Section 6.
+
+- Keep search, selection, global inventory merging, cross-paper comparison, synthesis, and final reporting in the parent survey agent.
+- Start one fresh sub-agent per selected paper. Never ask one sub-agent to deep-review multiple papers.
+- Use a context-free spawn such as `fork_turns="none"` when supported. Pass only the single-paper task packet defined in the contract; do not pass the conversation transcript, full candidate database, other paper analyses, or the parent's evolving synthesis.
+- Require every paper agent to load and follow `$paper-deep-review`. An agent prompt alone is not a substitute for the skill.
+- Give each paper agent exclusive write ownership of its paper folder. Paper agents must not edit survey-global files or another paper folder. The parent merges paper-local inventories and status reports after agents finish.
+- Treat this as model-context isolation plus auditable write ownership, not automatic filesystem security. Use parallel paper agents only when each has an enforced write sandbox or independent worktree. Otherwise run fresh agents sequentially and compare complete pre/post file manifests outside the assigned folder. Use an OS-level read sandbox or separate workspace if source confidentiality requires enforceable read isolation.
+- Do not weaken the one-paper-per-agent boundary to increase throughput.
+- Judge completion from files and acceptance checks, not from the sub-agent's final message. Record dispatch provenance, protected-file hashes, artifact manifests, verdicts, and remediation in `agent_dispatch_log.md` and summarize them in `execution_checklist.md`.
+- If sub-agents are unavailable, mark agent isolation as `blocked` and tell the user that in-context sequential review has weaker isolation. Continue only if the user explicitly accepts that reduced standard.
+
 ### Original-Paper Visual Evidence Contract
 
 Treat original-paper visuals as evidence, not decoration. Apply these requirements to every selected method paper unless its PDF is unavailable or genuinely contains no usable visual:
 
-- Extract at least two original visuals: one mechanism, architecture, mask, algorithm, or system-design figure; and one result, ablation, profiling, comparison, or system-evidence figure/table.
+- Target at least two original visuals: one mechanism, architecture, mask, algorithm, or system-design figure; and one result, ablation, profiling, comparison, or system-evidence figure/table. For each missing type, apply the visual-evidence skip contract independently.
 - Preserve the complete original caption with every extracted crop. Include the paper title, figure/table number, PDF page number, and source URL in the surrounding Markdown.
 - Prefer a clean crop that includes the visual and its full caption. A whole rendered page is only acceptable when cropping would lose essential labels or context.
 - Create `figure_inventory.md` with one row per extracted visual and fields for paper, PDF page, figure/table number, caption, local path, report section, linked claim, and QA status.
-- Generate `figures/contact-sheet.png` after extraction. Inspect it for crop boundaries, readability, caption completeness, duplicates, and accidental blank pages; record the review result in `execution_checklist.md`.
+- When one or more crops exist, generate `figures/contact-sheet.png` after extraction and inspect it for crop boundaries, readability, caption completeness, duplicates, and accidental blank pages. If no crop exists, do not create a blank placeholder; record the precise blocker and alternative evidence in `execution_checklist.md`.
 - Embed and explain the selected visuals in the corresponding `analysis.md` and reuse the most informative visuals in `synthesis.md`. An image that is only stored on disk, listed in the inventory, or shown without analytical discussion does not count.
-- If visual extraction is blocked, add `visual-evidence-skip: <precise reason>` to that paper's `analysis.md`; record the exact PDF page/search evidence, attempted extraction method, and alternative table, equation, or text evidence. Do not silently reduce the visual count.
+- For each missing visual type, add `visual-evidence-skip: <type and precise reason>` to that paper's `analysis.md`; record the exact PDF page/search evidence, attempted extraction method, alternative table/equation/text evidence, and effect on conclusions. Do not silently reduce the visual count.
 
 For each selected method paper, build an explicit evidence loop in `analysis.md`:
 
@@ -63,6 +78,7 @@ ai_algorithm_survey_<field_slug>/
 ├── impact_signals.md
 ├── paper_db.jsonl
 ├── selection.md
+├── agent_dispatch_log.md
 ├── figure_inventory.md
 ├── figures/
 │   ├── contact-sheet.png
@@ -70,11 +86,17 @@ ai_algorithm_survey_<field_slug>/
 │       └── survey-trends-infra.png
 ├── papers/
 │   └── <year>_<short-title>/
+│       ├── task_packet.yaml
 │       ├── paper.pdf
 │       ├── source/
+│       ├── review_checklist.md
+│       ├── figure_inventory.md
+│       ├── agent_handoff.md
+│       ├── artifact_manifest.sha256
 │       ├── figures/
-│       │   ├── pages/
-│       │   └── crops/
+│       │   ├── page_png/
+│       │   ├── crops/
+│       │   └── contact-sheet.png
 │       └── analysis.md
 └── synthesis.md
 ```
@@ -236,26 +258,32 @@ Write `selection.md` with:
 
 ### 6. Deep-Review Each Selected Paper
 
-For every selected paper, use `$paper-deep-review` and follow its required workflow. Do not replace the deep review with a short abstract summary.
+For every selected paper, delegate a single-paper task under `references/paper-review-agent-contract.md`. The paper agent must use `$paper-deep-review` and follow its complete workflow. Do not replace the deep review with a short abstract summary or perform the batch inside the parent context.
 
-For each paper:
+Before dispatch:
 
-- create `papers/<year>_<short-title>/`,
-- acquire PDF/source/code when available,
-- run the single-paper analysis using `$paper-deep-review`,
-- render the relevant PDF pages and extract visuals under `figures/crops/` according to the Original-Paper Visual Evidence Contract,
-- inspect the figure caption and the surrounding paper text before using a visual to support a claim,
-- write the result as `papers/<year>_<short-title>/analysis.md`,
-- embed at least the required mechanism and evidence visuals next to the corresponding explanation,
-- trace implementation claims from the paper to source code, operator APIs, kernel code, or an explicitly labeled inference,
+- create `papers/<year>_<short-title>/`, assign it to exactly one paper agent, and record a unique `dispatch_id`, runtime agent task/id, context-free spawn mode, and filesystem-isolation mode in `agent_dispatch_log.md`,
+- write the exact minimal task packet to parent-owned `task_packet.yaml` with metadata, role, URLs, known local inputs, verification questions, output folder, acceptance-contract path/hash, and the exact repository `$paper-deep-review` directory/tree hash; record the packet hash and do not allow the paper agent to modify it,
+- with an enforced per-agent write sandbox/worktree, record its boundary and permit parallel dispatch; otherwise dispatch sequentially and snapshot every file path/hash outside the assigned paper folder before and after the run,
+- ensure no two active agents own the same paper folder and no paper agent is asked to edit survey-global files.
+
+Each paper agent must:
+
+- create and maintain `review_checklist.md`, then acquire PDF/source/code when available,
+- render relevant PDF pages and extract visuals under `figures/crops/` according to the Original-Paper Visual Evidence Contract,
+- inspect each caption and surrounding paper text, maintain paper-local `figure_inventory.md`, and generate/inspect `figures/contact-sheet.png` when crops exist; otherwise record the precise visual blocker without a blank placeholder,
+- write `analysis.md`, embedding and discussing every accepted mechanism/evidence visual next to the corresponding explanation; target both required types and document the complete skip evidence for each missing type,
+- trace implementation claims to source code, operator APIs, kernel code, or an explicitly labeled inference,
 - complete the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop,
-- preserve paper/source/code URLs and commit hashes when code is inspected.
+- preserve paper/source/code URLs and commit hashes when code is inspected,
+- write `agent_handoff.md` using the contract schema, with every incomplete requirement classified as blocked or skipped-with-reason,
+- generate `artifact_manifest.sha256` last for all files in the assigned folder except the manifest itself; it must include the unchanged `task_packet.yaml`.
 
 If `$paper-deep-review` is unavailable, stop and tell the user it must be installed or provided before the batch survey can meet the requested standard.
 
-After each paper review, update `execution_checklist.md` with the paper folder, `analysis.md` path, whether PDF/source/code were acquired, extracted visual count and types, inventory status, evidence-loop status, and any `$paper-deep-review` limitations inherited from that paper's final response.
+After each paper agent finishes, validate the folder against the acceptance contract before accepting it. Recompute the task-packet, skill-tree, and contract hashes; verify `artifact_manifest.sha256`; and compare the enforced sandbox/worktree result or complete out-of-root pre/post manifests. Record the deterministic verdict (`accepted`, `accepted-with-limitations`, or `rejected`) in `agent_dispatch_log.md`. Update `execution_checklist.md` with the dispatch/agent identity, paper folder, `analysis.md` and `agent_handoff.md` paths, whether PDF/source/code were acquired, extracted visual count and types, paper-local inventory/contact-sheet status, evidence-loop status, failed acceptance checks, remediation, and any `$paper-deep-review` limitations.
 
-After all paper reviews, generate `figures/contact-sheet.png`, review it, and update every row's QA status in `figure_inventory.md` before writing the synthesis.
+After all paper reviews, merge paper-local inventories into survey-level `figure_inventory.md`. If accepted crops exist, generate and inspect `figures/contact-sheet.png` and update every row's QA status; if no accepted crop exists, do not create a blank placeholder and record the precise no-crop evidence in the inventory and checklist. Read each compact `agent_handoff.md` first; load only the cited sections of `analysis.md`, figures, code paths, or source material needed for cross-paper verification and synthesis.
 
 ### 7. Synthesize the Field
 
@@ -276,7 +304,7 @@ Include:
 - trend summary: what is converging, what remains unsettled, and where the next likely research directions are,
 - caveats about evidence quality, venue status, and whether claims come from paper text, code inspection, or your own inference.
 
-For each core paper, include a compact subsection that introduces the problem, walks through at least one original mechanism visual, explains the key implementation path, cites the result/ablation/system evidence, and states the limitation. Cross-paper tables and conclusions do not replace these per-paper explanations.
+For each core paper, include a compact subsection that introduces the problem, walks through the accepted original mechanism visual, explains the key implementation path, cites the accepted result/ablation/system evidence, and states the limitation. For a visual type accepted as missing under the agent verdict table, show the recorded alternative evidence and limitation instead of inventing or substituting a generated visual. Cross-paper tables and conclusions do not replace these per-paper explanations.
 
 Do not claim a paper is the "latest" or "state of the art" unless the current search supports that statement and the search date is recorded.
 
@@ -308,7 +336,7 @@ Record the exact Section 8 outcome in `execution_checklist.md`: command path or 
 Apply this section whenever the user requests a PPT, slide deck, or presentation in addition to the Markdown survey:
 
 - Use the applicable presentation skill and keep the deck editable.
-- Include at least one sourced original-paper visual for every core paper. Prefer a mechanism figure; add a result or system-evidence visual when it is needed to substantiate the slide's conclusion.
+- Include at least one accepted sourced original-paper visual for every core paper when available. Prefer a mechanism figure; add a result or system-evidence visual when needed. If a core paper was accepted with no usable visual, show its sourced alternative evidence and explicit limitation; do not use a generated visual as a substitute.
 - Put the paper title or short citation, figure/table number, PDF page, and source in the slide or speaker notes.
 - Give every core paper enough slide space to explain its problem, visualized mechanism, implementation path, evidence, and limitation. Overview, taxonomy, and conclusion slides cannot substitute for per-paper visual slides.
 - Reuse only visuals that passed the contact-sheet and inventory QA. Do not use captionless crops, unreadable screenshots, or generated diagrams as substitutes for paper evidence.
@@ -319,19 +347,22 @@ Apply this section whenever the user requests a PPT, slide deck, or presentation
 Before finishing:
 
 - Confirm `execution_checklist.md` exists, was updated after each major phase, and has no unclassified mandatory items.
-- Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, `figure_inventory.md`, `figures/contact-sheet.png`, each selected paper `analysis.md`, and `synthesis.md` exist.
+- Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, `agent_dispatch_log.md`, `figure_inventory.md`, each selected paper `analysis.md`, and `synthesis.md` exist; require `figures/contact-sheet.png` when accepted crops exist, otherwise require precise survey-level no-crop evidence.
 - Confirm search covered general search, GitHub/awesome repositories, arXiv, and relevant top venues/journals when available.
 - Confirm candidate papers record `affiliations` and `affiliation_evidence`, using explicit caveats where affiliations are unavailable.
 - Confirm candidate papers record impact signals: repo metrics, citation metrics, cross-reference count/evidence, and awesome-list frequency where available.
 - Confirm every selected paper has a clear role in the evolution narrative.
 - Confirm each selected method paper was analyzed with `$paper-deep-review`.
-- Confirm every selected method paper has at least one mechanism visual and one result/ablation/system-evidence visual, or a precise `visual-evidence-skip` entry with attempted extraction and alternative evidence.
+- Confirm each selected paper has one unique `dispatch_id` and fresh runtime agent task/id, no agent reviewed multiple papers, and each spawn mode/verdict is recorded in `agent_dispatch_log.md`; if agents were unavailable, confirm the reduced standard was explicitly accepted by the user.
+- Confirm each paper folder contains a fully classified `review_checklist.md`, paper-local `figure_inventory.md`, `agent_handoff.md`, and valid `artifact_manifest.sha256`; require inspected `figures/contact-sheet.png` when one or more crops exist, otherwise require precise visual-block evidence.
+- Confirm each dispatch used an enforced write sandbox/worktree or sequential complete out-of-root pre/post manifests; any unexpected path/hash change rejects the dispatch pending reconciliation. Then merge all accepted local inventories into the global inventory.
+- Confirm every selected method paper has at least one mechanism visual and one result/ablation/system-evidence visual; for each missing type, require a separate precise `visual-evidence-skip` entry with attempted extraction, alternative evidence, and effect on conclusions.
 - Confirm every counted visual has a complete caption, figure/table number, PDF page, valid local path, linked claim, report location, and reviewed QA status in `figure_inventory.md`.
-- Confirm `figures/contact-sheet.png` was inspected and no selected crop is blank, duplicated, clipped, unreadable, or missing its caption.
+- When accepted crops exist, confirm `figures/contact-sheet.png` was inspected and no selected crop is blank, duplicated, clipped, unreadable, or missing its caption; otherwise confirm precise no-crop evidence and no blank placeholder.
 - Confirm each counted visual is embedded and analytically discussed in `analysis.md` or `synthesis.md`; files that are merely present on disk do not count.
 - Confirm each selected method paper completes the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop.
 - Confirm synthesis claims cite selected papers or their `analysis.md` files; label cross-paper inferences explicitly.
-- If a presentation was requested, confirm every core paper has a sourced original-paper visual with figure/table number and PDF page, and confirm the rendered deck passed visual QA.
+- If a presentation was requested, confirm every available core-paper visual has its figure/table number and PDF page; for accepted no-visual papers, confirm sourced alternative evidence and the limitation are visible. Confirm the rendered deck passed visual QA.
 - If `$openrouter-icu-image` was available, confirm `synthesis.md` was passed as the `responses-doc --input-file` reference document, `figures/generated/survey-trends-infra.png` exists, and it is linked from `synthesis.md`; if unavailable or failed, state the limitation.
 - Confirm no required artifact was replaced by an easier substitute unless it is explicitly marked as skipped-with-reason.
 - Separate peer-reviewed versions from arXiv-only preprints.
@@ -340,6 +371,7 @@ Before finishing:
 ## Resources
 
 - `references/synthesis-template.md`: Chinese structure for the final cross-paper survey and trend synthesis.
+- `references/paper-review-agent-contract.md`: mandatory isolated sub-agent task packet, ownership rules, artifact schema, and parent acceptance checks for each selected paper.
 - `$paper-deep-review`: required per-paper workflow and source for original-paper figures, formulas, implementation evidence, and limitations.
 - `$pptx` or another applicable presentation skill: required when the user requests an editable presentation deliverable.
 - `$openrouter-icu-image`: optional post-processing skill for generating a shallow-gold flat technical infographic from `synthesis.md`.

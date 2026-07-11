@@ -1,4 +1,4 @@
 interface:
   display_name: "AI Algorithm Survey"
-  short_description: "Survey papers with visual and implementation evidence"
-  default_prompt: "Use $ai-algorithm-survey to survey a specific AI algorithm field, deep-review key papers with original-paper figures and implementation evidence, and synthesize the technical lineage and trends."
+  short_description: "Orchestrate isolated agents for evidence-based surveys"
+  default_prompt: "Use $ai-algorithm-survey to survey an AI field, assign each selected paper to an isolated $paper-deep-review sub-agent, validate its evidence artifacts, and synthesize the technical lineage and trends."
