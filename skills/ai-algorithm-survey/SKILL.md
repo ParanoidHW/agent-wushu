@@ -1,6 +1,6 @@
 ---
 name: ai-algorithm-survey
-description: Search, select, deep-review, and synthesize papers for a specific AI algorithm field. Use when the user provides an AI algorithm/topic/domain and wants literature discovery through search engines, arXiv, GitHub/awesome paper lists, and top AI conferences or journals such as CVPR, ICML, ICLR, NeurIPS, AAAI, TPAMI, TIP, IROS, ICRA, RA-L, with paper affiliations, repository popularity, citation/cross-reference frequency, and high-value paper signals recorded, then wants each key paper analyzed with $paper-deep-review and a final cross-paper lineage, relationship, and trend summary.
+description: Search, select, deep-review, and synthesize papers for a specific AI algorithm field. Use when the user provides an AI algorithm/topic/domain and wants literature discovery through search engines, arXiv, GitHub/awesome paper lists, and top AI conferences or journals such as CVPR, ICML, ICLR, NeurIPS, AAAI, TPAMI, TIP, IROS, ICRA, RA-L, with paper affiliations, repository popularity, citation/cross-reference frequency, original-paper figure evidence, implementation details, and high-value paper signals recorded, then wants each key paper analyzed with $paper-deep-review and a final cross-paper lineage, relationship, trend summary, or presentation.
 ---
 
 # AI Algorithm Survey
@@ -31,6 +31,26 @@ Do not silently substitute different artifacts for required outputs:
 
 Before final response, reread `execution_checklist.md` and verify every mandatory item is either completed or explicitly blocked/skipped with evidence. Do not declare the survey complete while any mandatory item remains unclassified.
 
+### Original-Paper Visual Evidence Contract
+
+Treat original-paper visuals as evidence, not decoration. Apply these requirements to every selected method paper unless its PDF is unavailable or genuinely contains no usable visual:
+
+- Extract at least two original visuals: one mechanism, architecture, mask, algorithm, or system-design figure; and one result, ablation, profiling, comparison, or system-evidence figure/table.
+- Preserve the complete original caption with every extracted crop. Include the paper title, figure/table number, PDF page number, and source URL in the surrounding Markdown.
+- Prefer a clean crop that includes the visual and its full caption. A whole rendered page is only acceptable when cropping would lose essential labels or context.
+- Create `figure_inventory.md` with one row per extracted visual and fields for paper, PDF page, figure/table number, caption, local path, report section, linked claim, and QA status.
+- Generate `figures/contact-sheet.png` after extraction. Inspect it for crop boundaries, readability, caption completeness, duplicates, and accidental blank pages; record the review result in `execution_checklist.md`.
+- Embed and explain the selected visuals in the corresponding `analysis.md` and reuse the most informative visuals in `synthesis.md`. An image that is only stored on disk, listed in the inventory, or shown without analytical discussion does not count.
+- If visual extraction is blocked, add `visual-evidence-skip: <precise reason>` to that paper's `analysis.md`; record the exact PDF page/search evidence, attempted extraction method, and alternative table, equation, or text evidence. Do not silently reduce the visual count.
+
+For each selected method paper, build an explicit evidence loop in `analysis.md`:
+
+```text
+problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation
+```
+
+Do not replace original-paper visuals with generated diagrams. Generated diagrams may summarize the survey, but they are not evidence for a paper's mechanism or results.
+
 ## Output Layout
 
 Create one workspace folder per survey:
@@ -43,7 +63,9 @@ ai_algorithm_survey_<field_slug>/
 ├── impact_signals.md
 ├── paper_db.jsonl
 ├── selection.md
+├── figure_inventory.md
 ├── figures/
+│   ├── contact-sheet.png
 │   └── generated/
 │       └── survey-trends-infra.png
 ├── papers/
@@ -51,6 +73,8 @@ ai_algorithm_survey_<field_slug>/
 │       ├── paper.pdf
 │       ├── source/
 │       ├── figures/
+│       │   ├── pages/
+│       │   └── crops/
 │       └── analysis.md
 └── synthesis.md
 ```
@@ -219,12 +243,19 @@ For each paper:
 - create `papers/<year>_<short-title>/`,
 - acquire PDF/source/code when available,
 - run the single-paper analysis using `$paper-deep-review`,
+- render the relevant PDF pages and extract visuals under `figures/crops/` according to the Original-Paper Visual Evidence Contract,
+- inspect the figure caption and the surrounding paper text before using a visual to support a claim,
 - write the result as `papers/<year>_<short-title>/analysis.md`,
+- embed at least the required mechanism and evidence visuals next to the corresponding explanation,
+- trace implementation claims from the paper to source code, operator APIs, kernel code, or an explicitly labeled inference,
+- complete the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop,
 - preserve paper/source/code URLs and commit hashes when code is inspected.
 
 If `$paper-deep-review` is unavailable, stop and tell the user it must be installed or provided before the batch survey can meet the requested standard.
 
-After each paper review, update `execution_checklist.md` with the paper folder, `analysis.md` path, whether PDF/source/code were acquired, and any `$paper-deep-review` limitations inherited from that paper's final response.
+After each paper review, update `execution_checklist.md` with the paper folder, `analysis.md` path, whether PDF/source/code were acquired, extracted visual count and types, inventory status, evidence-loop status, and any `$paper-deep-review` limitations inherited from that paper's final response.
+
+After all paper reviews, generate `figures/contact-sheet.png`, review it, and update every row's QA status in `figure_inventory.md` before writing the synthesis.
 
 ### 7. Synthesize the Field
 
@@ -244,6 +275,8 @@ Include:
 - soft/hardware infrastructure evolution, including data types, bandwidth utilization, CPU/GPU/NPU heterogeneity, kernels/operators, memory, interconnect, serving, and deployment constraints,
 - trend summary: what is converging, what remains unsettled, and where the next likely research directions are,
 - caveats about evidence quality, venue status, and whether claims come from paper text, code inspection, or your own inference.
+
+For each core paper, include a compact subsection that introduces the problem, walks through at least one original mechanism visual, explains the key implementation path, cites the result/ablation/system evidence, and states the limitation. Cross-paper tables and conclusions do not replace these per-paper explanations.
 
 Do not claim a paper is the "latest" or "state of the art" unless the current search supports that statement and the search date is recorded.
 
@@ -270,18 +303,35 @@ If `$openrouter-icu-image` or `OPENROUTER_ICU_API_KEY` is unavailable, skip gene
 
 Record the exact Section 8 outcome in `execution_checklist.md`: command path or invocation method, whether `responses-doc --input-file synthesis.md` was used, output image path, link insertion status, or the precise reason generation was skipped. Do not mark Section 8 as done for non-PNG substitutes.
 
+## Presentation Deliverables
+
+Apply this section whenever the user requests a PPT, slide deck, or presentation in addition to the Markdown survey:
+
+- Use the applicable presentation skill and keep the deck editable.
+- Include at least one sourced original-paper visual for every core paper. Prefer a mechanism figure; add a result or system-evidence visual when it is needed to substantiate the slide's conclusion.
+- Put the paper title or short citation, figure/table number, PDF page, and source in the slide or speaker notes.
+- Give every core paper enough slide space to explain its problem, visualized mechanism, implementation path, evidence, and limitation. Overview, taxonomy, and conclusion slides cannot substitute for per-paper visual slides.
+- Reuse only visuals that passed the contact-sheet and inventory QA. Do not use captionless crops, unreadable screenshots, or generated diagrams as substitutes for paper evidence.
+- Render the final deck and inspect every slide for image readability, clipping, overlap, citation visibility, and layout consistency. Record the result or exact blocker in `execution_checklist.md`.
+
 ## Quality Checks
 
 Before finishing:
 
 - Confirm `execution_checklist.md` exists, was updated after each major phase, and has no unclassified mandatory items.
-- Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, each selected paper `analysis.md`, and `synthesis.md` exist.
+- Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, `figure_inventory.md`, `figures/contact-sheet.png`, each selected paper `analysis.md`, and `synthesis.md` exist.
 - Confirm search covered general search, GitHub/awesome repositories, arXiv, and relevant top venues/journals when available.
 - Confirm candidate papers record `affiliations` and `affiliation_evidence`, using explicit caveats where affiliations are unavailable.
 - Confirm candidate papers record impact signals: repo metrics, citation metrics, cross-reference count/evidence, and awesome-list frequency where available.
 - Confirm every selected paper has a clear role in the evolution narrative.
 - Confirm each selected method paper was analyzed with `$paper-deep-review`.
+- Confirm every selected method paper has at least one mechanism visual and one result/ablation/system-evidence visual, or a precise `visual-evidence-skip` entry with attempted extraction and alternative evidence.
+- Confirm every counted visual has a complete caption, figure/table number, PDF page, valid local path, linked claim, report location, and reviewed QA status in `figure_inventory.md`.
+- Confirm `figures/contact-sheet.png` was inspected and no selected crop is blank, duplicated, clipped, unreadable, or missing its caption.
+- Confirm each counted visual is embedded and analytically discussed in `analysis.md` or `synthesis.md`; files that are merely present on disk do not count.
+- Confirm each selected method paper completes the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop.
 - Confirm synthesis claims cite selected papers or their `analysis.md` files; label cross-paper inferences explicitly.
+- If a presentation was requested, confirm every core paper has a sourced original-paper visual with figure/table number and PDF page, and confirm the rendered deck passed visual QA.
 - If `$openrouter-icu-image` was available, confirm `synthesis.md` was passed as the `responses-doc --input-file` reference document, `figures/generated/survey-trends-infra.png` exists, and it is linked from `synthesis.md`; if unavailable or failed, state the limitation.
 - Confirm no required artifact was replaced by an easier substitute unless it is explicitly marked as skipped-with-reason.
 - Separate peer-reviewed versions from arXiv-only preprints.
@@ -290,4 +340,6 @@ Before finishing:
 ## Resources
 
 - `references/synthesis-template.md`: Chinese structure for the final cross-paper survey and trend synthesis.
+- `$paper-deep-review`: required per-paper workflow and source for original-paper figures, formulas, implementation evidence, and limitations.
+- `$pptx` or another applicable presentation skill: required when the user requests an editable presentation deliverable.
 - `$openrouter-icu-image`: optional post-processing skill for generating a shallow-gold flat technical infographic from `synthesis.md`.
