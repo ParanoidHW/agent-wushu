@@ -10,9 +10,9 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 - [pending] W2 Public reviews: acquire and preserve OpenReview evidence, or record why it is unavailable/not applicable.
 - [pending] W2 Code: acquire the official/selected repository and record remote URL plus commit hash, or classify its absence.
 - [pending] W3 Text: extract searchable paper text and retain the extraction path/tool evidence.
-- [pending] W3 Visuals: extract readable paper figures/tables with complete captions and narrow boundaries.
-- [pending] W3 Inventory: complete `figure_inventory.md` for every counted visual.
-- [pending] W3 Visual QA: when crops exist, generate and inspect `figures/contact-sheet.png` and fix/reject every failed crop; otherwise record precise visual-block and alternative-evidence details.
+- [pending] W3 Visuals: extract readable crops containing exactly one numbered figure/table and its complete caption, with unrelated page content excluded and normally only an 8-32 pixel safety margin; reject unrelated whitespace over 5% per side unless intrinsic.
+- [pending] W3 Inventory: complete `figure_inventory.md` for every counted visual, including source-page dimensions and exact crop bounding box `(x, y, width, height)`.
+- [pending] W3 Visual QA: when crops exist, use `figures/contact-sheet.png` for triage and inspect every crop individually at 100% scale; fix/reject blank, duplicate, clipped, unreadable, captionless, neighboring-content, or excessive-margin crops. Otherwise record precise visual-block and alternative-evidence details without a blank placeholder.
 - [pending] W4 Evidence discipline: map important claims to sections, equations, figures, tables, appendices, or code.
 - [pending] W4 Claim matrix: classify every claimed technical point as direct, indirect, confounded, missing, or otherwise precisely qualified evidence.
 - [pending] W4 Symbols and terminology: complete the symbol table and paper-specific terminology/data-construction clarification.
@@ -29,7 +29,7 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 ## Quality Checks
 
 - [pending] Q1 All local Markdown image links resolve.
-- [pending] Q2 Every accepted crop has a full caption/title, readable resolution, narrow boundaries, and passed contact-sheet QA; a no-crop run has precise visual-block evidence and no blank placeholder.
+- [pending] Q2 Every accepted crop contains exactly one numbered object and its full caption, records source-page dimensions/bounding box, has readable resolution and tight boundaries, and passes both contact-sheet triage and individual 100% QA; a no-crop run has precise visual-block evidence and no blank placeholder.
 - [pending] Q3 Every key number maps to paper evidence or a clearly labeled calculation.
 - [pending] Q4 Every claimed technical point has an evidence classification; unsupported claims are explicit.
 - [pending] Q5 Generated-diagram handling used `responses-doc --input-file analysis.md` and produced a linked PNG, or has a precise limitation.

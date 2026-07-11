@@ -93,12 +93,12 @@ The paper agent must always create:
 - parent-created `task_packet.yaml` must still exist byte-for-byte unchanged,
 - `review_checklist.md`: Workflow 1-11 and all `$paper-deep-review` Quality Checks, each marked `pending`, `done`, `blocked`, or `skipped-with-reason`; no item may remain unclassified.
 - `analysis.md`: the complete `$paper-deep-review` report, including source inventory, symbol table, technical-claim evidence matrix, evidence loops, code/infra analysis when relevant, limitations, and unresolved questions.
-- `figure_inventory.md`: one row per counted visual with figure/table number, PDF page, complete caption, local path, linked claim, report section, source URL, and QA status.
+- `figure_inventory.md`: one row per counted visual with figure/table number, PDF page, source-page dimensions, exact crop bounding box `(x, y, width, height)`, complete caption, local path, linked claim, report section, source URL, and QA status.
 - `agent_handoff.md`: a compact completion record following Section 5.
 - `artifact_manifest.sha256`: generated last and covering every file under `output_folder`, including `task_packet.yaml`, except the manifest itself.
 - Source, PDF, extracted text, crops, code, and OpenReview artifacts required by `$paper-deep-review`, or precise blocked/skipped entries in both `review_checklist.md` and `agent_handoff.md`.
 
-When one or more crops exist, the paper agent must also create and inspect `figures/contact-sheet.png` covering every counted crop. Target at least one mechanism visual and one result/ablation/system-evidence visual, and embed/discuss every accepted visual. For each missing visual type, add the exact `visual-evidence-skip` attempts, source-page/search evidence, alternative evidence, and effect on conclusions required by the decision table. If no crop can be produced, do not create a blank placeholder.
+When one or more crops exist, the paper agent must create `figures/contact-sheet.png` covering every counted crop and use it for batch triage, then inspect every crop individually at 100% scale. Each crop must contain exactly one numbered figure/table and its full caption, exclude unrelated page content, retain all object labels/panels/footnotes, and normally use only an 8-32 pixel safety margin; reject unrelated whitespace over 5% on any side unless intrinsic to the figure. Record source-page dimensions and the exact crop bounding box. Allow a whole-page crop only for a page-level evidence object or essential cross-page context, and record the exception. Target at least one mechanism visual and one result/ablation/system-evidence visual, and embed/discuss every accepted visual. For each missing visual type, add the exact `visual-evidence-skip` attempts, source-page/search evidence, alternative evidence, and effect on conclusions required by the decision table. If no crop can be produced, do not create a blank placeholder.
 
 ## 5. Handoff Schema
 
@@ -152,7 +152,7 @@ The parent survey agent must inspect files rather than accepting the agent's mes
 2. Confirm `task_packet.yaml` is unchanged from the parent-recorded SHA-256. Recompute the repository skill-tree and contract hashes and match them against the packet and `agent_handoff.md`.
 3. Confirm `review_checklist.md`, `analysis.md`, `figure_inventory.md`, `agent_handoff.md`, and `artifact_manifest.sha256` exist; verify every manifest hash, including `task_packet.yaml`, and ensure every checklist item is classified.
 4. Resolve every local Markdown image link and every inventory path.
-5. If crops exist, inspect the contact sheet for blank, duplicated, clipped, unreadable, captionless, or overly broad crops. If no crop exists, verify the precise visual blocker, attempts, alternative evidence, and effect on conclusions.
+5. If crops exist, use the contact sheet for triage and inspect each crop individually at 100% scale. Confirm exactly one numbered object plus its full caption, complete inventory dimensions/bounding box, tight margins, and no blank, duplicate, clipped, unreadable, captionless, neighboring, or unrelated content. If no crop exists, verify the precise visual blocker, attempts, alternative evidence, and effect on conclusions.
 6. Confirm every accepted mechanism/evidence visual is embedded and analytically discussed. Apply the decision table separately to each missing required visual type, including the exactly-one and zero-visual branches.
 7. Confirm the technical-claim evidence matrix distinguishes direct, indirect, confounded, and missing evidence.
 8. Confirm the explicit evidence loop reaches a limitation and implementation claims cite code paths plus commit hashes or are labeled as inference/unavailable.

@@ -52,9 +52,11 @@ Treat original-paper visuals as evidence, not decoration. Apply these requiremen
 
 - Target at least two original visuals: one mechanism, architecture, mask, algorithm, or system-design figure; and one result, ablation, profiling, comparison, or system-evidence figure/table. For each missing type, apply the visual-evidence skip contract independently.
 - Preserve the complete original caption with every extracted crop. Include the paper title, figure/table number, PDF page number, and source URL in the surrounding Markdown.
-- Prefer a clean crop that includes the visual and its full caption. A whole rendered page is only acceptable when cropping would lose essential labels or context.
-- Create `figure_inventory.md` with one row per extracted visual and fields for paper, PDF page, figure/table number, caption, local path, report section, linked claim, and QA status.
-- When one or more crops exist, generate `figures/contact-sheet.png` after extraction and inspect it for crop boundaries, readability, caption completeness, duplicates, and accidental blank pages. If no crop exists, do not create a blank placeholder; record the precise blocker and alternative evidence in `execution_checklist.md`.
+- Crop exactly one numbered figure or table together with its full caption. Exclude page headers/footers, section headings, preceding/following body paragraphs, neighboring figures/tables, page numbers, and unrelated equations. Split adjacent figures and tables into separate files even when they appear on the same page.
+- Use tight but non-destructive bounds: retain all panels, legends, axes, labels, footnotes belonging to the numbered object, and its caption; then leave only a small safety margin, normally 8-32 pixels at the stored resolution. Reject a crop when unrelated whitespace on any side exceeds 5% of that image dimension unless the whitespace is intrinsic to the figure layout.
+- A whole rendered page is acceptable only when the page itself is the evidence object or cropping would remove essential cross-page context. Record that exception in the inventory.
+- Create `figure_inventory.md` with one row per extracted visual and fields for paper, PDF page, figure/table number, source page dimensions, crop bounding box `(x, y, width, height)`, caption, local path, report section, linked claim, and QA status.
+- When one or more crops exist, generate `figures/contact-sheet.png` after extraction and use it only for batch triage. Then inspect every selected crop individually at 100% scale for crop boundaries, unrelated context, excessive margins, readability, caption completeness, duplicates, and accidental blank pages; record both review passes in `execution_checklist.md`. If no crop exists, do not create a blank placeholder; record the precise blocker and alternative evidence.
 - Embed and explain the selected visuals in the corresponding `analysis.md` and reuse the most informative visuals in `synthesis.md`. An image that is only stored on disk, listed in the inventory, or shown without analytical discussion does not count.
 - For each missing visual type, add `visual-evidence-skip: <type and precise reason>` to that paper's `analysis.md`; record the exact PDF page/search evidence, attempted extraction method, alternative table/equation/text evidence, and effect on conclusions. Do not silently reduce the visual count.
 
@@ -271,7 +273,8 @@ Each paper agent must:
 
 - create and maintain `review_checklist.md`, then acquire PDF/source/code when available,
 - render relevant PDF pages and extract visuals under `figures/crops/` according to the Original-Paper Visual Evidence Contract,
-- inspect each caption and surrounding paper text, maintain paper-local `figure_inventory.md`, and generate/inspect `figures/contact-sheet.png` when crops exist; otherwise record the precise visual blocker without a blank placeholder,
+- inspect each caption and surrounding paper text before using a visual, but exclude that surrounding body text from the crop,
+- record source-page dimensions and the exact crop bounding box, maintain paper-local `figure_inventory.md`, and when crops exist use the contact sheet for triage plus inspect every crop individually at 100% scale; otherwise record the precise visual blocker without a blank placeholder,
 - write `analysis.md`, embedding and discussing every accepted mechanism/evidence visual next to the corresponding explanation; target both required types and document the complete skip evidence for each missing type,
 - trace implementation claims to source code, operator APIs, kernel code, or an explicitly labeled inference,
 - complete the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop,
@@ -357,8 +360,9 @@ Before finishing:
 - Confirm each paper folder contains a fully classified `review_checklist.md`, paper-local `figure_inventory.md`, `agent_handoff.md`, and valid `artifact_manifest.sha256`; require inspected `figures/contact-sheet.png` when one or more crops exist, otherwise require precise visual-block evidence.
 - Confirm each dispatch used an enforced write sandbox/worktree or sequential complete out-of-root pre/post manifests; any unexpected path/hash change rejects the dispatch pending reconciliation. Then merge all accepted local inventories into the global inventory.
 - Confirm every selected method paper has at least one mechanism visual and one result/ablation/system-evidence visual; for each missing type, require a separate precise `visual-evidence-skip` entry with attempted extraction, alternative evidence, and effect on conclusions.
-- Confirm every counted visual has a complete caption, figure/table number, PDF page, valid local path, linked claim, report location, and reviewed QA status in `figure_inventory.md`.
-- When accepted crops exist, confirm `figures/contact-sheet.png` was inspected and no selected crop is blank, duplicated, clipped, unreadable, or missing its caption; otherwise confirm precise no-crop evidence and no blank placeholder.
+- Confirm every counted visual has a complete caption, figure/table number, PDF page, source-page dimensions, exact crop bounding box, valid local path, linked claim, report location, and reviewed QA status in `figure_inventory.md`.
+- When accepted crops exist, confirm `figures/contact-sheet.png` was inspected and every selected crop was also opened individually at 100% scale; otherwise confirm precise no-crop evidence and no blank placeholder.
+- Confirm each crop contains exactly one numbered figure/table and its full caption, with no page header/footer, section heading, neighboring object, unrelated body paragraph, or excessive outer margin. Reject caption clipping even when the figure body itself is intact.
 - Confirm each counted visual is embedded and analytically discussed in `analysis.md` or `synthesis.md`; files that are merely present on disk do not count.
 - Confirm each selected method paper completes the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop.
 - Confirm synthesis claims cite selected papers or their `analysis.md` files; label cross-paper inferences explicitly.

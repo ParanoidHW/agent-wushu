@@ -54,13 +54,16 @@ Treat this skill as a required workflow rather than optional guidance.
    - Use `scripts/crop_pdf_figures.py` to batch crop figures from rendered page PNGs using a JSON crop spec, then generate a contact sheet for visual review.
    - Screenshot/crop requirements are strict:
      - Every Markdown-embedded screenshot of a Figure/Table must include its full caption. A crop without the visible `Figure`, `Fig.`, or `Table` label and caption text is incomplete and must be recropped.
-     - Keep crop margins narrow: include only the figure/table body, its title/legend/axis labels, and the complete caption. Leave a small readable border, but avoid surrounding paragraphs, headers/footers, page numbers, neighboring figures, or excess whitespace.
+     - Crop exactly one numbered figure or table together with its full caption. Split adjacent numbered objects into separate files even when they share a page.
+     - Exclude page headers/footers, section headings, preceding/following body paragraphs, neighboring figures/tables, page numbers, and unrelated equations.
+     - Use tight but non-destructive bounds: retain every panel, legend, axis, label, footnote, and caption belonging to the object, then leave only a small safety margin, normally 8-32 pixels at the stored resolution. Reject unrelated whitespace over 5% on any side unless intrinsic to the figure layout.
+     - Use a whole rendered page only when the page itself is the evidence object or cropping would remove essential cross-page context; record that exception in `figure_inventory.md`.
      - Do not crop the caption separately from the visual unless the paper layout makes one combined crop unreadable. If split crops are unavoidable, embed the visual and caption together in adjacent Markdown and label both paths in the figure inventory.
      - Preserve enough resolution for axis labels, legends, table entries, and caption text to be readable at normal Markdown viewing width. Re-render pages at higher DPI before accepting blurry crops.
      - Name crops by source and semantic target, for example `fig3_method_caption.png` or `table2_main_results_caption.png`, so the file name signals that the caption is included.
    - For every figure embedded in Markdown, verify it includes the intended plot/table and full caption/title, has narrow clean boundaries, and excludes unrelated surrounding text.
-   - Record every counted crop in `figure_inventory.md` with paper title, figure/table number, PDF page, complete caption, local path, linked claim, report section, source URL, and QA status.
-   - Generate `figures/contact-sheet.png` after cropping, inspect every counted visual, and record the result in both the inventory and `review_checklist.md`. If no crop exists, do not generate an empty contact sheet; record the exact visual-evidence skip instead.
+   - Record every counted crop in `figure_inventory.md` with paper title, figure/table number, PDF page, source-page dimensions, exact crop bounding box `(x, y, width, height)`, complete caption, local path, linked claim, report section, source URL, and QA status.
+   - Generate `figures/contact-sheet.png` after cropping and use it only for batch triage. Then inspect every counted crop individually at 100% scale and record both passes in the inventory and `review_checklist.md`. If no crop exists, do not generate an empty contact sheet; record the exact visual-evidence skip instead.
 
 4. **Read with evidence discipline.**
    - Map every important claim to a paper section, figure, table, appendix, or code path.
@@ -155,7 +158,7 @@ Before finishing:
 - Confirm `review_checklist.md` exists, was updated throughout the run, and has no pending or unclassified mandatory items.
 - Confirm `figure_inventory.md` exists; if crops exist, confirm `figures/contact-sheet.png` exists and every counted crop has a complete inventory row and reviewed QA status. If no crop exists, confirm the precise blocker and alternative evidence are recorded.
 - Confirm all Markdown image links resolve.
-- Review all crops in a contact sheet or individually for full captions/titles and narrow clean boundaries; fix crops that include the next paragraph, page chrome, neighboring content, excessive whitespace, or any truncated caption.
+- Use the contact sheet for crop triage, then open every selected crop individually at 100% scale. Confirm exactly one numbered figure/table with its full caption, recorded source-page dimensions/bounding box, tight margins, and no next paragraph, page chrome, section heading, neighboring content, unrelated equation, excessive whitespace, or truncated caption.
 - Confirm every key number in the review maps to a paper section/table/figure or a clearly stated calculation.
 - Confirm every claimed technical point has been checked for ablation/control/mechanism evidence and unsupported claims are explicitly marked.
 - If `$openrouter-icu-image` was available, confirm `analysis.md` was passed as the `responses-doc --input-file` reference document, the generated analysis diagram exists, and it is linked from `analysis.md`; if unavailable or failed, state the limitation.
