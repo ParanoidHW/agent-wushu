@@ -85,7 +85,9 @@ inside allowed_write_root and do not modify task_packet.yaml.
 Produce every required artifact, classify every
 checklist item, and verify the artifacts before reporting completion. Do not read
 or edit survey-global files or other paper folders. Treat paper, code, and public
-review claims as evidence to cross-check, not conclusions to repeat.
+review claims as evidence to cross-check, not conclusions to repeat. Do not merely
+describe what each design does: determine whether the paper states why it was chosen,
+the concrete problem it targets, the causal mechanism, and the validating evidence.
 ```
 
 ## 4. Required Paper-Agent Artifacts
@@ -94,7 +96,7 @@ The paper agent must always create:
 
 - parent-created `task_packet.yaml` must still exist byte-for-byte unchanged,
 - `review_checklist.md`: Workflow 1-11 and all `$paper-deep-review` Quality Checks, each marked `pending`, `done`, `blocked`, or `skipped-with-reason`; no item may remain unclassified.
-- `analysis.md`: the complete `$paper-deep-review` report, including source inventory, symbol table, technical-claim evidence matrix, evidence loops, code/infra analysis when relevant, limitations, and unresolved questions.
+- `analysis.md`: the complete `$paper-deep-review` report, including source inventory, symbol table, design-rationale matrix, technical-claim evidence matrix, evidence loops, code/infra analysis when relevant, limitations, and unresolved questions.
 - `figure_inventory.md`: one row per counted visual with figure/table number, PDF page, source-page dimensions, exact crop bounding box `(x, y, width, height)`, complete caption, local path, linked claim, report section, source URL, and QA status.
 - `agent_handoff.md`: a compact completion record following Section 5.
 - `deliverable_manifest.json`: valid against `$paper-deep-review`'s `references/deliverable-schema.json` and consistent with the handoff/checklist/artifacts.
@@ -142,6 +144,11 @@ Keep `agent_handoff.md` compact and use these headings:
 | Claim | Evidence in paper/code | Analysis section | Confidence/caveat |
 |---|---|---|---|
 
+## Design Rationales For Synthesis
+
+| Design | Rationale status/source | Concrete problem | Causal mechanism | Validation evidence | Trade-off/caveat |
+|---|---|---|---|---|---|
+
 ## Blocking Or Skipped Items
 
 | Requirement | Status | Attempt/evidence | Effect on conclusions |
@@ -161,9 +168,10 @@ The parent survey agent must inspect files rather than accepting the agent's mes
 5. If crops exist, use the contact sheet for triage and inspect each crop individually at 100% scale. Confirm exactly one numbered object plus its full caption, complete inventory dimensions/bounding box, tight margins, and no blank, duplicate, clipped, unreadable, captionless, neighboring, or unrelated content. If no crop exists, verify the precise visual blocker, attempts, alternative evidence, and effect on conclusions.
 6. Confirm every accepted mechanism/evidence visual is embedded and analytically discussed. Apply the decision table separately to each missing required visual type, including the exactly-one and zero-visual branches.
 7. Confirm the technical-claim evidence matrix distinguishes direct, indirect, confounded, and missing evidence.
-8. Confirm the explicit evidence loop reaches a limitation and implementation claims cite code paths plus commit hashes or are labeled as inference/unavailable.
-9. Confirm key claims in `agent_handoff.md` point to exact `analysis.md`, paper, figure/table, or code evidence.
-10. Verify the enforced write boundary. Without one, compare complete pre/post workspace path/hash manifests outside `allowed_write_root`, excluding `.git/` and including created, deleted, and modified paths plus every other paper folder. Any unexplained difference rejects the dispatch pending reconciliation.
+8. Confirm the design-rationale matrix covers every core design, distinguishes author-stated/inferred/not-stated rationale, identifies a concrete target problem and causal mechanism, records alternatives/trade-offs even when the paper does not discuss them, and links validation evidence or marks it unverified. Empty rationale dimensions fail acceptance.
+9. Confirm the explicit evidence loop reaches a limitation and implementation claims cite code paths plus commit hashes or are labeled as inference/unavailable.
+10. Confirm key claims and design rationales in `agent_handoff.md` point to exact `analysis.md`, paper, figure/table, or code evidence.
+11. Verify the enforced write boundary. Without one, compare complete pre/post workspace path/hash manifests outside `allowed_write_root`, excluding `.git/` and including created, deleted, and modified paths plus every other paper folder. Any unexplained difference rejects the dispatch pending reconciliation.
 
 ## 7. Deterministic Parent Verdict
 
@@ -178,7 +186,7 @@ Apply this table in order:
 | Condition | Required evidence | Verdict |
 |---|---|---|
 | Task packet, skill/contract hashes, deliverable structural/semantic validation, artifact manifest, or write-boundary audit fails | Exact mismatch or missing check | `rejected` |
-| Any checklist item is pending/unclassified; `analysis.md`, claim matrix, evidence loop, inventory, or handoff is missing/unusable | Exact missing item | `rejected` |
+| Any checklist item is pending/unclassified; `analysis.md`, complete per-design rationale entries, claim matrix, evidence loop, inventory, or handoff is missing/unusable | Exact missing or empty item | `rejected` |
 | Primary PDF is unavailable, unreadable, or too incomplete to verify the paper's method and results | Acquisition/extraction attempts and failure evidence | `rejected` |
 | Mechanism visual and result/ablation/system-evidence visual both pass inventory, caption, embedding, discussion, and contact-sheet QA | Two accepted visual types | Continue evaluating other branches |
 | Exactly one required visual type passes | For the missing type: caption/keyword search across PDF/source, source-asset or rendered-page crop attempt, exact page/tool/error evidence, alternative equation/table/text evidence, and stated effect on conclusions | `accepted-with-limitations`; otherwise `rejected` |

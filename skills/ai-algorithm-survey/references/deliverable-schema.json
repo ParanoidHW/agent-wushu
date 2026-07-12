@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agent-wushu.local/schemas/ai-algorithm-survey-deliverable-1.0.0.json",
+  "$id": "https://agent-wushu.local/schemas/ai-algorithm-survey-deliverable-1.1.0.json",
   "title": "AI Algorithm Survey Deliverable Manifest",
   "description": "Machine-readable manifest for one ai-algorithm-survey delivery and its accepted per-paper reviews.",
   "type": "object",
@@ -22,7 +22,7 @@
     "limitations"
   ],
   "properties": {
-    "schema_version": { "const": "1.0.0" },
+    "schema_version": { "const": "1.1.0" },
     "deliverable_type": { "const": "ai-algorithm-survey" },
     "field": {
       "type": "object",
@@ -108,12 +108,13 @@
     "synthesis_coverage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["timeline", "taxonomy", "lineage", "comparison", "infrastructure", "trends", "evidence_caveats"],
+      "required": ["timeline", "taxonomy", "lineage", "comparison", "design_rationales", "infrastructure", "trends", "evidence_caveats"],
       "properties": {
         "timeline": { "type": "boolean" },
         "taxonomy": { "type": "boolean" },
         "lineage": { "type": "boolean" },
         "comparison": { "type": "boolean" },
+        "design_rationales": { "type": "boolean" },
         "infrastructure": { "type": "boolean" },
         "trends": { "type": "boolean" },
         "evidence_caveats": { "type": "boolean" }
@@ -163,6 +164,8 @@
                   "paper_identity_uniqueness": { "const": true },
                   "agent_task_identity_uniqueness": { "const": true },
                   "paper_manifests_match_entries": { "const": true },
+                  "design_rationale_entries_match_paper_manifests": { "const": true },
+                  "design_rationale_core_design_coverage": { "const": true },
                   "dispatch_records_match_entries": { "const": true },
                   "visual_totals_match_papers_and_inventory": { "const": true },
                   "checklist_manifest_consistency": { "const": true }
@@ -189,6 +192,7 @@
               "taxonomy": { "const": true },
               "lineage": { "const": true },
               "comparison": { "const": true },
+              "design_rationales": { "const": true },
               "infrastructure": { "const": true },
               "trends": { "const": true },
               "evidence_caveats": { "const": true }
@@ -198,7 +202,9 @@
             "minItems": 1,
             "items": {
               "properties": {
-                "verdict": { "enum": ["accepted", "accepted-with-limitations"] }
+                "verdict": { "enum": ["accepted", "accepted-with-limitations"] },
+                "design_rationale_analysis": { "const": "passed" },
+                "design_rationales": { "minItems": 1 }
               }
             }
           }
@@ -366,6 +372,8 @@
             "paper_identity_uniqueness",
             "agent_task_identity_uniqueness",
             "paper_manifests_match_entries",
+            "design_rationale_entries_match_paper_manifests",
+            "design_rationale_core_design_coverage",
             "dispatch_records_match_entries",
             "visual_totals_match_papers_and_inventory",
             "checklist_manifest_consistency"
@@ -376,6 +384,8 @@
             "paper_identity_uniqueness": { "type": "boolean" },
             "agent_task_identity_uniqueness": { "type": "boolean" },
             "paper_manifests_match_entries": { "type": "boolean" },
+            "design_rationale_entries_match_paper_manifests": { "type": "boolean" },
+            "design_rationale_core_design_coverage": { "type": "boolean" },
             "dispatch_records_match_entries": { "type": "boolean" },
             "visual_totals_match_papers_and_inventory": { "type": "boolean" },
             "checklist_manifest_consistency": { "type": "boolean" }
@@ -404,6 +414,8 @@
         "analysis",
         "agent_handoff",
         "artifact_manifest",
+        "design_rationale_analysis",
+        "design_rationales",
         "mechanism_visual_count",
         "result_or_system_visual_count",
         "limitations"
@@ -419,10 +431,70 @@
         "analysis": { "$ref": "#/$defs/presentArtifact" },
         "agent_handoff": { "$ref": "#/$defs/presentArtifact" },
         "artifact_manifest": { "$ref": "#/$defs/presentArtifact" },
+        "design_rationale_analysis": { "$ref": "#/$defs/checkStatus" },
+        "design_rationales": { "type": "array", "items": { "$ref": "#/$defs/designRationale" } },
         "mechanism_visual_count": { "type": "integer", "minimum": 0 },
         "result_or_system_visual_count": { "type": "integer", "minimum": 0 },
         "limitations": { "type": "array", "items": { "$ref": "#/$defs/limitation" } }
       }
+    },
+    "designRationale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "design",
+        "rationale_status",
+        "rationale_sources",
+        "concrete_problem",
+        "causal_mechanism",
+        "analysis_basis",
+        "alternatives_tradeoffs",
+        "validation_evidence"
+      ],
+      "properties": {
+        "design": { "type": "string", "minLength": 1 },
+        "rationale_status": { "enum": ["author-stated", "inferred", "not-stated"] },
+        "rationale_sources": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "concrete_problem": { "type": "string", "minLength": 1 },
+        "causal_mechanism": { "type": "string", "minLength": 1 },
+        "analysis_basis": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "alternatives_tradeoffs": { "type": "string", "minLength": 1 },
+        "validation_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "sources", "judgment"],
+          "properties": {
+            "type": { "enum": ["direct-ablation", "replacement-baseline", "sensitivity", "theory", "mechanism-visualization", "code", "indirect", "none"] },
+            "sources": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "judgment": { "enum": ["supported", "partially-supported", "plausible", "unverified"] }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "rationale_status": { "const": "not-stated" } } },
+          "then": { "properties": { "rationale_sources": { "maxItems": 0 } } },
+          "else": { "properties": { "rationale_sources": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "validation_evidence": { "properties": { "type": { "const": "none" } } } } },
+          "then": {
+            "properties": {
+              "validation_evidence": {
+                "properties": {
+                  "sources": { "maxItems": 0 },
+                  "judgment": { "const": "unverified" }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "validation_evidence": { "properties": { "sources": { "minItems": 1 } } }
+            }
+          }
+        }
+      ]
     },
     "limitation": {
       "type": "object",

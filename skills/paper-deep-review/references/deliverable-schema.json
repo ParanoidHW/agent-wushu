@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agent-wushu.local/schemas/paper-deep-review-deliverable-1.0.0.json",
+  "$id": "https://agent-wushu.local/schemas/paper-deep-review-deliverable-1.1.0.json",
   "title": "Paper Deep Review Deliverable Manifest",
   "description": "Machine-readable manifest for one paper-deep-review delivery.",
   "type": "object",
@@ -15,11 +15,12 @@
     "semantic_validation",
     "artifacts",
     "visual_evidence",
+    "design_rationales",
     "evidence_checks",
     "limitations"
   ],
   "properties": {
-    "schema_version": { "const": "1.0.0" },
+    "schema_version": { "const": "1.1.0" },
     "deliverable_type": { "const": "paper-deep-review" },
     "invocation_mode": { "enum": ["standalone", "delegated"] },
     "paper": {
@@ -94,11 +95,16 @@
         "individual_crop_qa": { "enum": ["passed", "blocked", "not-applicable"] }
       }
     },
+    "design_rationales": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/designRationale" }
+    },
     "evidence_checks": {
       "type": "object",
       "additionalProperties": false,
       "required": [
         "claim_matrix",
+        "design_rationale_analysis",
         "symbol_table",
         "evidence_loop",
         "code_cross_check",
@@ -108,6 +114,7 @@
       ],
       "properties": {
         "claim_matrix": { "$ref": "#/$defs/checkStatus" },
+        "design_rationale_analysis": { "$ref": "#/$defs/checkStatus" },
         "symbol_table": { "$ref": "#/$defs/checkStatus" },
         "evidence_loop": { "$ref": "#/$defs/checkStatus" },
         "code_cross_check": { "$ref": "#/$defs/checkStatus" },
@@ -180,6 +187,8 @@
               "checks": {
                 "properties": {
                   "artifact_paths_and_hashes": { "const": true },
+                  "design_rationale_evidence_consistency": { "const": true },
+                  "design_rationale_core_design_coverage": { "const": true },
                   "visual_count_sum": { "const": true },
                   "missing_visual_types": { "const": true },
                   "provenance_hash_equality": { "const": true },
@@ -199,12 +208,14 @@
           "evidence_checks": {
             "properties": {
               "claim_matrix": { "const": "passed" },
+              "design_rationale_analysis": { "const": "passed" },
               "symbol_table": { "const": "passed" },
               "evidence_loop": { "const": "passed" },
               "infrastructure_analysis": { "const": "passed" },
               "gain_attribution": { "const": "passed" }
             }
-          }
+          },
+          "design_rationales": { "minItems": 1 }
         }
       }
     },
@@ -399,6 +410,8 @@
           "additionalProperties": false,
           "required": [
             "artifact_paths_and_hashes",
+            "design_rationale_evidence_consistency",
+            "design_rationale_core_design_coverage",
             "visual_count_sum",
             "missing_visual_types",
             "provenance_hash_equality",
@@ -406,6 +419,8 @@
           ],
           "properties": {
             "artifact_paths_and_hashes": { "type": "boolean" },
+            "design_rationale_evidence_consistency": { "type": "boolean" },
+            "design_rationale_core_design_coverage": { "type": "boolean" },
             "visual_count_sum": { "type": "boolean" },
             "missing_visual_types": { "type": "boolean" },
             "provenance_hash_equality": { "type": "boolean" },
@@ -418,6 +433,64 @@
         {
           "if": { "properties": { "status": { "const": "passed" } } },
           "then": { "properties": { "errors": { "maxItems": 0 } } }
+        }
+      ]
+    },
+    "designRationale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "design",
+        "rationale_status",
+        "rationale_sources",
+        "concrete_problem",
+        "causal_mechanism",
+        "analysis_basis",
+        "alternatives_tradeoffs",
+        "validation_evidence"
+      ],
+      "properties": {
+        "design": { "type": "string", "minLength": 1 },
+        "rationale_status": { "enum": ["author-stated", "inferred", "not-stated"] },
+        "rationale_sources": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "concrete_problem": { "type": "string", "minLength": 1 },
+        "causal_mechanism": { "type": "string", "minLength": 1 },
+        "analysis_basis": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "alternatives_tradeoffs": { "type": "string", "minLength": 1 },
+        "validation_evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "sources", "judgment"],
+          "properties": {
+            "type": { "enum": ["direct-ablation", "replacement-baseline", "sensitivity", "theory", "mechanism-visualization", "code", "indirect", "none"] },
+            "sources": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+            "judgment": { "enum": ["supported", "partially-supported", "plausible", "unverified"] }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "rationale_status": { "const": "not-stated" } } },
+          "then": { "properties": { "rationale_sources": { "maxItems": 0 } } },
+          "else": { "properties": { "rationale_sources": { "minItems": 1 } } }
+        },
+        {
+          "if": { "properties": { "validation_evidence": { "properties": { "type": { "const": "none" } } } } },
+          "then": {
+            "properties": {
+              "validation_evidence": {
+                "properties": {
+                  "sources": { "maxItems": 0 },
+                  "judgment": { "const": "unverified" }
+                }
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "validation_evidence": { "properties": { "sources": { "minItems": 1 } } }
+            }
+          }
         }
       ]
     },

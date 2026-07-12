@@ -70,6 +70,9 @@ Treat this skill as a required workflow rather than optional guidance.
 4. **Read with evidence discipline.**
    - Map every important claim to a paper section, figure, table, appendix, or code path.
    - Explain the logic chain: problem -> assumption -> method -> measurement -> conclusion.
+   - Do not stop at describing what the method does. Build a **design-rationale matrix** for every core component, architecture choice, loss/objective, data construction step, training recipe, inference procedure, and system/runtime optimization.
+   - For each design, state whether the paper explicitly explains why it was chosen. Cite the exact section/equation/figure when the rationale is `author-stated`; otherwise label it `inferred` or `not-stated` rather than presenting reviewer inference as author intent.
+   - Identify the concrete failure mode, bottleneck, ambiguity, constraint, or baseline weakness the design is meant to solve, then explain the causal mechanism by which the design could address that problem. Include alternatives/trade-offs and whether ablations or controlled evidence validate the rationale.
    - Build a **technical-claim evidence matrix** for the paper's claimed technical points: each new component, architecture choice, loss/objective, data construction, training recipe, inference procedure, kernel/runtime optimization, benchmark design, or analysis claim must be mapped to supporting evidence.
    - For every claimed technical point, check whether the paper provides direct ablation, replacement baseline, sensitivity analysis, controlled experiment, mechanism visualization, theoretical proof, or code/config evidence. Mark unsupported points explicitly as unverified, correlation-only, or plausible but not isolated.
    - Use LaTeX math for formulas. Do not leave formulas as plain-text approximations when exact notation matters.
@@ -134,6 +137,7 @@ Treat this skill as a required workflow rather than optional guidance.
    - Include a source/figure inventory near the top.
    - Include OpenReview public-review cross-check when available, combining reviewer concerns with paper content, rebuttal, appendix, experiments, and code evidence instead of listing reviews separately.
    - Include the technical-claim evidence matrix before or inside the key-results section, so claimed technical points are visibly tied to ablation/mechanism evidence or marked as unsupported.
+   - Include the design-rationale matrix in the method section. A component description without its stated/inferred rationale, concrete target problem, causal mechanism, and evidence status is incomplete.
    - Include the symbol table near the top before the method section.
    - Include a terminology/data-construction clarification when the paper uses paper-specific names for datasets, variants, generated data, budgets, masks, or model roles.
    - Include images inline near the discussion they support.
@@ -145,7 +149,7 @@ Treat this skill as a required workflow rather than optional guidance.
    - Do not generate the diagram from prompt text alone. Do not paste the Markdown into the prompt, summarize the Markdown into the prompt, or use `/v1/images/edits` for Markdown input. If document upload through `responses-doc` cannot be used, skip image generation and state the limitation.
    - Generate a high-quality, high-resolution PNG under `figures/generated/`, for example `figures/generated/algorithm-analysis.png`.
    - Use `--quality high`, `--output-format png`, and a 16:9 high-resolution size such as `1792x1008` or `2048x1152` when supported. If high-resolution stalls or fails, retry at `1024x1024`.
-   - Prompt for a shallow-gold background and flat technical infographic style. The visual should summarize the paper's algorithm mechanism, evidence chain, key technical claims, ablation support, limitations, and infra implications without inventing numeric results.
+   - Prompt for a shallow-gold background and flat technical infographic style. The visual should summarize the paper's design rationale, concrete target problem, causal mechanism, evidence chain, key technical claims, ablation support, limitations, and infra implications without inventing numeric results.
    - Include infra visual cues for data types, bandwidth utilization, and CPU/GPU/NPU heterogeneous execution when they are relevant to the paper.
    - Verify the image file exists, then insert it near the top of `analysis.md` after the source/figure inventory with a relative Markdown link and caption that labels it as an AI-generated analysis diagram.
    - Confirm the inserted image path is relative to `analysis.md` and does not break Markdown rendering.
@@ -166,12 +170,13 @@ Before finishing:
 
 - Confirm `review_checklist.md` exists, was updated throughout the run, and has no pending or unclassified mandatory items.
 - Confirm `deliverable_manifest.json` exists, conforms to `references/deliverable-schema.json`, and agrees with artifact paths, hashes, visual counts, evidence status, invocation mode, and limitations.
-- Confirm `semantic_validation` passed: artifact paths/hashes resolve, visual counts and missing types agree, delegated provenance hashes match, and the frozen checklist/handoff agree with the final manifest.
+- Confirm `semantic_validation` passed: artifact paths/hashes resolve, every core design has a complete rationale entry consistent with `analysis.md`, visual counts and missing types agree, delegated provenance hashes match, and the frozen checklist/handoff agree with the final manifest.
 - Confirm `figure_inventory.md` exists; if crops exist, confirm `figures/contact-sheet.png` exists and every counted crop has a complete inventory row and reviewed QA status. If no crop exists, confirm the precise blocker and alternative evidence are recorded.
 - Confirm all Markdown image links resolve.
 - Use the contact sheet for crop triage, then open every selected crop individually at 100% scale. Confirm exactly one numbered figure/table with its full caption, recorded source-page dimensions/bounding box, tight margins, and no next paragraph, page chrome, section heading, neighboring content, unrelated equation, excessive whitespace, or truncated caption.
 - Confirm every key number in the review maps to a paper section/table/figure or a clearly stated calculation.
 - Confirm every claimed technical point has been checked for ablation/control/mechanism evidence and unsupported claims are explicitly marked.
+- Confirm every core design has a design-rationale entry separating author-stated rationale from inference, naming the concrete problem it targets, explaining the causal mechanism, and checking whether evidence supports that explanation.
 - If `$openrouter-icu-image` was available, confirm `analysis.md` was passed as the `responses-doc --input-file` reference document, the generated analysis diagram exists, and it is linked from `analysis.md`; if unavailable or failed, state the limitation.
 - Confirm code claims include file paths and commit hashes.
 - Confirm the symbol table covers every variable used in key formulas, metrics, and tables.
