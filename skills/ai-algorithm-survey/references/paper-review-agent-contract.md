@@ -59,6 +59,12 @@ source_url_or_path: <url/local path or unknown>
 code_url_or_path: <url/local path or unknown>
 openreview_url: <url or unknown>
 verification_questions: []
+revision_mode: <initial|revise-existing>
+previous_document_version: <semver or unknown>
+previous_revision_id: <rev-id or unknown>
+previous_deliverable_manifest_path: <path or unknown>
+previous_deliverable_manifest_sha256: <sha256 or unknown>
+revision_request: <initial delivery or compact reason for revision>
 task_packet_path: <output_folder/task_packet.yaml>
 output_folder: <exclusive paper folder>
 allowed_write_root: <same exclusive paper folder>
@@ -90,6 +96,8 @@ describe what each design does: determine whether the paper states why it was ch
 the concrete problem it targets, the causal mechanism, and the validating evidence.
 Put paper-specific terms and symbols in one centralized sourced chapter, including
 ambiguity notes; do not scatter definitions or invent symbols when none apply.
+Maintain the centralized revision section and manifest history. For a revised delivery,
+preserve prior entries, increment version/revision ID, and bind the previous manifest hash.
 ```
 
 ## 4. Required Paper-Agent Artifacts
@@ -98,7 +106,7 @@ The paper agent must always create:
 
 - parent-created `task_packet.yaml` must still exist byte-for-byte unchanged,
 - `review_checklist.md`: Workflow 1-11 and all `$paper-deep-review` Quality Checks, each marked `pending`, `done`, `blocked`, or `skipped-with-reason`; no item may remain unclassified.
-- `analysis.md`: the complete `$paper-deep-review` report, including source inventory, one centralized terminology-and-symbol chapter, design-rationale matrix, technical-claim evidence matrix, evidence loops, code/infra analysis when relevant, limitations, and unresolved questions.
+- `analysis.md`: the complete `$paper-deep-review` report, including centralized revision information, source inventory, one centralized terminology-and-symbol chapter, design-rationale matrix, technical-claim evidence matrix, evidence loops, code/infra analysis when relevant, limitations, and unresolved questions.
 - `figure_inventory.md`: one row per counted visual with figure/table number, PDF page, source-page dimensions, exact crop bounding box `(x, y, width, height)`, complete caption, local path, linked claim, report section, source URL, and QA status.
 - `agent_handoff.md`: a compact completion record following Section 5.
 - `deliverable_manifest.json`: valid against `$paper-deep-review`'s `references/deliverable-schema.json` and consistent with the handoff/checklist/artifacts.
@@ -128,6 +136,10 @@ Keep `agent_handoff.md` compact and use these headings:
 - Output folder: ...
 - Source/PDF/code acquired: ...
 - Analysis: analysis.md
+- Document version: ...
+- Current revision ID: ...
+- Revision mode: initial | revise-existing
+- Superseded revision/manifest: ... | not applicable
 - Checklist: review_checklist.md
 - Visual inventory: figure_inventory.md
 - Contact sheet: figures/contact-sheet.png | skipped-with-reason
@@ -156,6 +168,11 @@ Keep `agent_handoff.md` compact and use these headings:
 | Type | Term/symbol | Alias/provenance | Paper-specific meaning | Scope/unit/value | Source | Ambiguity/caveat |
 |---|---|---|---|---|---|---|
 
+## Revision Summary
+
+| Revision ID | Version | Revised at | Revised by | Type | Supersedes | Migration issue/resolution | Summary | Reason | Affected locations | Evidence | Conclusion impact |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+
 ## Blocking Or Skipped Items
 
 | Requirement | Status | Attempt/evidence | Effect on conclusions |
@@ -170,16 +187,17 @@ The parent survey agent must inspect files rather than accepting the agent's mes
 
 1. Match `dispatch_id`, agent task name/id, paper key, output folder, context-free spawn record, and filesystem-isolation mode against `agent_dispatch_log.md`.
 2. Confirm `task_packet.yaml` is unchanged from the parent-recorded SHA-256. Recompute the repository skill-tree and contract hashes and match them against the packet and `agent_handoff.md`.
-3. Confirm `review_checklist.md`, `analysis.md`, `figure_inventory.md`, `agent_handoff.md`, `deliverable_manifest.json`, and `artifact_manifest.sha256` exist. Validate the deliverable manifest against the repository paper schema; independently recompute every required semantic check, including visual totals/missing types and provenance hash equality; cross-check it against the frozen handoff/checklist/artifacts; verify every final artifact-manifest hash including the task/deliverable manifests; and ensure every checklist item is classified.
+3. Confirm `review_checklist.md`, `analysis.md`, `figure_inventory.md`, `agent_handoff.md`, `deliverable_manifest.json`, and `artifact_manifest.sha256` exist. Validate the deliverable manifest against the repository paper schema; independently recompute every required semantic check, including revision-section/history/current-ID consistency, visual totals/missing types, and provenance hash equality; cross-check it against the frozen handoff/checklist/artifacts; verify every final artifact-manifest hash including the task/deliverable manifests; and ensure every checklist item is classified.
 4. Resolve every local Markdown image link and every inventory path.
 5. If crops exist, use the contact sheet for triage and inspect each crop individually at 100% scale. Confirm exactly one numbered object plus its full caption, complete inventory dimensions/bounding box, tight margins, and no blank, duplicate, clipped, unreadable, captionless, neighboring, or unrelated content. If no crop exists, verify the precise visual blocker, attempts, alternative evidence, and effect on conclusions.
 6. Confirm every accepted mechanism/evidence visual is embedded and analytically discussed. Apply the decision table separately to each missing required visual type, including the exactly-one and zero-visual branches.
 7. Confirm the technical-claim evidence matrix distinguishes direct, indirect, confounded, and missing evidence.
-8. Confirm one centralized terminology-and-symbol chapter covers key paper-specific terms and every applicable symbol, includes source and ambiguity notes, matches the deliverable manifest and handoff, and explicitly marks symbols not applicable when appropriate. Scattered or source-free definitions fail acceptance.
-9. Confirm the design-rationale matrix covers every core design, distinguishes author-stated/inferred/not-stated rationale, identifies a concrete target problem and causal mechanism, records alternatives/trade-offs even when the paper does not discuss them, and links validation evidence or marks it unverified. Empty rationale dimensions fail acceptance.
-10. Confirm the explicit evidence loop reaches a limitation and implementation claims cite code paths plus commit hashes or are labeled as inference/unavailable.
-11. Confirm key claims, terminology/symbol entries, and design rationales in `agent_handoff.md` point to exact `analysis.md`, paper, figure/table, or code evidence.
-12. Verify the enforced write boundary. Without one, compare complete pre/post workspace path/hash manifests outside `allowed_write_root`, excluding `.git/` and including created, deleted, and modified paths plus every other paper folder. Any unexplained difference rejects the dispatch pending reconciliation.
+8. Confirm the centralized revision section matches the manifest and the handoff projection, including revision time and reason. The current version/revision ID must equal the latest history entry. Accept one bootstrap: `initial` with no predecessor, or `migration` with a known legacy manifest hash/unresolved issue. Each unresolved issue must stay blocked until exactly one later `migration-resolution` both supersedes the prior blocked manifest and binds the same issue ID to the recovered legacy manifest. Every later tracked entry must preserve prior history and point to the immediately preceding revision/version/manifest SHA-256 from the task packet or retained prior delivery. Any changed frozen artifact without a new revision rejects acceptance.
+9. Confirm one centralized terminology-and-symbol chapter covers key paper-specific terms and every applicable symbol, includes source and ambiguity notes, matches the deliverable manifest and handoff, and explicitly marks symbols not applicable when appropriate. Scattered or source-free definitions fail acceptance.
+10. Confirm the design-rationale matrix covers every core design, distinguishes author-stated/inferred/not-stated rationale, identifies a concrete target problem and causal mechanism, records alternatives/trade-offs even when the paper does not discuss them, and links validation evidence or marks it unverified. Empty rationale dimensions fail acceptance.
+11. Confirm the explicit evidence loop reaches a limitation and implementation claims cite code paths plus commit hashes or are labeled as inference/unavailable.
+12. Confirm key claims, revision entries, terminology/symbol entries, and design rationales in `agent_handoff.md` point to exact `analysis.md`, paper, figure/table, or code evidence.
+13. Verify the enforced write boundary. Without one, compare complete pre/post workspace path/hash manifests outside `allowed_write_root`, excluding `.git/` and including created, deleted, and modified paths plus every other paper folder. Any unexplained difference rejects the dispatch pending reconciliation.
 
 ## 7. Deterministic Parent Verdict
 
@@ -194,7 +212,7 @@ Apply this table in order:
 | Condition | Required evidence | Verdict |
 |---|---|---|
 | Task packet, skill/contract hashes, deliverable structural/semantic validation, artifact manifest, or write-boundary audit fails | Exact mismatch or missing check | `rejected` |
-| Any checklist item is pending/unclassified; `analysis.md`, centralized terminology/symbol chapter, complete per-design rationale entries, claim matrix, evidence loop, inventory, or handoff is missing/unusable | Exact missing or empty item | `rejected` |
+| Any checklist item is pending/unclassified; `analysis.md`, revision section/history, centralized terminology/symbol chapter, complete per-design rationale entries, claim matrix, evidence loop, inventory, or handoff is missing/unusable | Exact missing or empty item | `rejected` |
 | Primary PDF is unavailable, unreadable, or too incomplete to verify the paper's method and results | Acquisition/extraction attempts and failure evidence | `rejected` |
 | Mechanism visual and result/ablation/system-evidence visual both pass inventory, caption, embedding, discussion, and contact-sheet QA | Two accepted visual types | Continue evaluating other branches |
 | Exactly one required visual type passes | For the missing type: caption/keyword search across PDF/source, source-asset or rendered-page crop attempt, exact page/tool/error evidence, alternative equation/table/text evidence, and stated effect on conclusions | `accepted-with-limitations`; otherwise `rejected` |

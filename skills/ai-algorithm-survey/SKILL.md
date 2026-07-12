@@ -21,6 +21,7 @@ Before starting substantive work:
 - Convert Workflow sections 1-8 and the Quality Checks into concrete checklist items.
 - Mark each item as `pending`, `done`, `blocked`, or `skipped-with-reason`.
 - Keep the checklist updated after each phase and before any final response.
+- Put a centralized revision-information section near the top of `synthesis.md`. Record `initial` for a new survey; use `migration` for a pre-history survey, with `legacy-manifest` when the old manifest hash is known or a stable `unresolved` issue plus blocked status after failed recovery. Resolve it append-only with a later `migration-resolution` entry when the legacy manifest is recovered. For later tracked changes, increment the document version, append history, bind the superseded revision/manifest hash, and state affected locations, reason/evidence, and impact on conclusions.
 - After all paper, synthesis, diagram, and optional presentation work, create `deliverable_manifest.json` conforming to `references/deliverable-schema.json`. Run Draft 2020-12 structural validation and every required `semantic_validation` cross-check. Record errors and do not declare completion when either validation fails or cannot run.
 
 Do not silently substitute different artifacts for required outputs:
@@ -279,6 +280,7 @@ Each paper agent must:
 - inspect each caption and surrounding paper text before using a visual, but exclude that surrounding body text from the crop,
 - record source-page dimensions and the exact crop bounding box, maintain paper-local `figure_inventory.md`, and when crops exist use the contact sheet for triage plus inspect every crop individually at 100% scale; otherwise record the precise visual blocker without a blank placeholder,
 - write `analysis.md`, embedding and discussing every accepted mechanism/evidence visual next to the corresponding explanation; target both required types and document the complete skip evidence for each missing type,
+- include paper revision version/ID in the handoff and paper manifest, preserving prior revision history when remediating an existing paper delivery,
 - place paper-specific terminology and symbols in one centralized `analysis.md` chapter, with sources and ambiguity notes; explicitly mark symbols not applicable when appropriate,
 - analyze why every core design was chosen, what concrete problem it targets, and how it could solve that problem; distinguish author-stated rationale from inference/not-stated and check the rationale against ablations or other evidence,
 - trace implementation claims to source code, operator APIs, kernel code, or an explicitly labeled inference,
@@ -301,6 +303,7 @@ After all selected papers have `analysis.md`, write `synthesis.md` from the deep
 Include:
 
 - search scope and selection criteria,
+- one centralized revision-information section with current version/revision ID and append-only history,
 - GitHub/awesome repositories used as discovery sources and what they contributed,
 - high-heat/high-value paper ranking with evidence, separating academic citations, cross-paper references, GitHub popularity, and conceptual importance,
 - timeline of the selected works,
@@ -345,11 +348,12 @@ Record the exact Section 8 outcome in `execution_checklist.md`: command path or 
 
 After Section 8 and any requested presentation are complete, finalize the survey delivery in two passes:
 
-1. Write a preliminary root `deliverable_manifest.json` from parent-accepted paper manifests and dispatch records; run Draft 2020-12 validation and all semantic checks.
-2. Use the preliminary result to finalize `execution_checklist.md`, then freeze every referenced global and per-paper artifact.
-3. Recompute frozen artifact hashes in the deliverable manifest, rerun structural and semantic validation, and freeze the final manifest. A `passed` validation must have an empty error list; do not modify referenced artifacts afterward without restarting finalization.
+1. Before hashing, finalize the revision-information section. Start new history with `initial`; bootstrap a legacy survey with `migration` and either a known legacy manifest hash or an unresolved predecessor that blocks completion. For a changed tracked survey, increment the document version, append a revision entry, and bind it to the previous revision and deliverable-manifest SHA-256.
+2. Write a preliminary root `deliverable_manifest.json` from parent-accepted paper manifests and dispatch records; include the survey revision history plus each paper's current document version/revision ID, then run Draft 2020-12 validation and all semantic checks.
+3. Use the preliminary result to finalize `execution_checklist.md`, then freeze every referenced global and per-paper artifact.
+4. Recompute frozen artifact hashes in the deliverable manifest, rerun structural and semantic validation, and freeze the final manifest. A `passed` validation must have an empty error list. Any later change starts a new revision and requires version/revision increment, appended history, and complete re-finalization.
 
-Semantic validation must confirm actual relative paths and hashes, selected-paper count equals the paper array length, paper keys/folders/dispatch IDs and runtime agent task/IDs are unique, the centralized terminology/symbol chapter matches the manifest, gives every canonical definition valid sources and a paper-stated/cross-paper-synthesis status, and reconciles accepted paper glossaries without erasing paper-specific differences, every paper entry and per-design rationale array matches its accepted paper manifest and covers all core designs, global visual totals match paper manifests plus the merged inventory, and the frozen checklist agrees with the final manifest.
+Semantic validation must confirm actual relative paths and hashes; the revision section matches the manifest; revision history starts with exactly one bootstrap entry (`initial` with no predecessor, or `migration` with a legacy/unresolved predecessor), uses unique IDs/versions, advances time/version, and makes every later tracked entry supersede the immediately preceding revision/version/manifest hash; every unresolved issue has at most one later `migration-resolution`, and any unresolved issue without a valid resolution forces blocked status; current version/ID equals the final entry; each paper version/revision ID matches its accepted manifest; selected-paper count equals the paper array length; paper keys/folders/dispatch IDs and runtime agent task/IDs are unique; the centralized terminology/symbol chapter matches the manifest, gives every canonical definition valid sources and a paper-stated/cross-paper-synthesis status, and reconciles accepted paper glossaries without erasing paper-specific differences; every paper entry and per-design rationale array matches its accepted paper manifest and covers all core designs; global visual totals match paper manifests plus the merged inventory; and the frozen checklist agrees with the final manifest.
 
 ## Presentation Deliverables
 
@@ -368,7 +372,7 @@ Before finishing:
 
 - Confirm `execution_checklist.md` exists, was updated after each major phase, and has no unclassified mandatory items.
 - Confirm `deliverable_manifest.json` exists, conforms to `references/deliverable-schema.json`, and agrees with all global artifacts, per-paper manifests/verdicts, visual QA, agent isolation, synthesis coverage, presentation state, and limitations.
-- Confirm survey `semantic_validation` passed with empty errors for artifact hashes, selected-paper count, paper and runtime-agent identity uniqueness, paper-manifest/dispatch reconciliation, per-design rationale equality/core-design coverage, visual aggregation, and frozen-checklist consistency.
+- Confirm survey `semantic_validation` passed with empty errors for artifact hashes, revision-section/history/latest-ID consistency, paper revision identity reconciliation, selected-paper count, paper and runtime-agent identity uniqueness, paper-manifest/dispatch reconciliation, per-design rationale equality/core-design coverage, visual aggregation, and frozen-checklist consistency.
 - Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, `agent_dispatch_log.md`, `figure_inventory.md`, each selected paper `analysis.md`, and `synthesis.md` exist; require `figures/contact-sheet.png` when accepted crops exist, otherwise require precise survey-level no-crop evidence.
 - Confirm search covered general search, GitHub/awesome repositories, arXiv, and relevant top venues/journals when available.
 - Confirm candidate papers record `affiliations` and `affiliation_evidence`, using explicit caveats where affiliations are unavailable.
@@ -387,6 +391,7 @@ Before finishing:
 - Confirm each selected paper analyzes why its core designs were chosen, the specific problems they address, the causal mechanism, alternatives/trade-offs, and supporting evidence, while separating author-stated rationale from inference or missing rationale.
 - Confirm synthesis claims cite selected papers or their `analysis.md` files; label cross-paper inferences explicitly.
 - Confirm `synthesis.md` contains one centralized terminology-and-symbol chapter, defines key field terms, and preserves paper-specific usages and symbol meanings with sources even when symbols are not overloaded. Mark symbols not applicable only when every accepted paper glossary does so and the synthesis introduces no analysis-derived symbols; never invent entries.
+- Confirm `synthesis.md` contains revision information matching the manifest: current version/revision ID, ordered append-only history, a valid initial or migration bootstrap, exact predecessor identity/hash for later tracked revisions, changed locations, reason/evidence, and impact on conclusions. Unresolved predecessors must use stable issue IDs, record recovery attempts, and remain blocked until a later append-only `migration-resolution` binds the recovered legacy manifest. Confirm every paper's recorded version/revision ID matches its accepted paper manifest.
 - If a presentation was requested, confirm every available core-paper visual has its figure/table number and PDF page; for accepted no-visual papers, confirm sourced alternative evidence and the limitation are visible. Confirm the rendered deck passed visual QA.
 - If a presentation was requested, confirm every core paper's design rationale, concrete target problem, causal mechanism, alternatives/trade-offs, and rationale evidence are visible or recorded in speaker notes with author-stated/inferred/not-stated qualification.
 - If `$openrouter-icu-image` was available, confirm `synthesis.md` was passed as the `responses-doc --input-file` reference document, `figures/generated/survey-trends-infra.png` exists, and it is linked from `synthesis.md`; if unavailable or failed, state the limitation.

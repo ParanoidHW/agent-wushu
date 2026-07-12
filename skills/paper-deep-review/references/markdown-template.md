@@ -7,6 +7,19 @@ Use this template for Chinese paper-review deliverables. Adapt headings when the
 
 > 资料状态：说明 PDF/LaTeX/source/code 是否存在；说明图片来自原始素材还是 PDF 截图裁剪。
 
+## 修订信息
+
+- 当前文档版本：`<semver, e.g. 1.0.0>`
+- 当前修订 ID：`<rev-...>`
+- 当前修订时间：`<ISO 8601 datetime>`
+- 替代版本：`<previous version/revision/manifest sha256 or none for initial>`
+
+| 修订 ID | 文档版本 | 时间 | 修订者 | 类型 | 替代修订 | 迁移问题/解析 | 变更摘要 | 原因 | 影响位置 | 依据 | 对结论影响 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| `<rev-id>` | `<version>` | `<datetime>` | `<agent task/name or human role>` | `<initial/migration/migration-resolution/content-update/evidence-update/correction/format-only/mixed>` | `<tracked revision+version+hash / legacy hash / unresolved recovery record / none>` | `<issue-id + attempts / recovered legacy manifest / none>` | `<what changed>` | `<why>` | `<analysis.md#section; artifact paths>` | `<user request/source/validation evidence>` | `<none/minor/material>` |
+
+全新交付记录 `initial`。接入旧交付时记录 `migration`：旧 manifest hash 可得时使用 `legacy-manifest`，允许旧版本/修订 ID 未知；若 hash 也无法恢复，记录稳定 `issue_id`、`unresolved` 和恢复尝试，并将交付标为 blocked。恢复后追加 `migration-resolution`，它既指向前一 blocked manifest，也把同一 issue ID 绑定到恢复出的 legacy manifest；不要改写原 unresolved 记录。此后继续只追加记录；冻结后的任何内容变化都必须递增版本、生成新的修订 ID、精确指向前一 manifest SHA-256，并重新计算交付 hash。
+
 ## 0. 资料与配图索引
 
 - 论文：`<path>`
