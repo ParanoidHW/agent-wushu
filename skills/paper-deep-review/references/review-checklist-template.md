@@ -16,7 +16,7 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 - [pending] W4 Evidence discipline: map important claims to sections, equations, figures, tables, appendices, or code.
 - [pending] W4 Design rationale: for every core design, separate author-stated/inferred/not-stated rationale, identify the concrete problem, explain the causal mechanism, and record alternatives/trade-offs plus validation evidence.
 - [pending] W4 Claim matrix: classify every claimed technical point as direct, indirect, confounded, missing, or otherwise precisely qualified evidence.
-- [pending] W4 Symbols and terminology: complete the symbol table and paper-specific terminology/data-construction clarification.
+- [pending] W4 Terminology and symbols: complete one centralized `analysis.md` chapter containing sourced term and symbol tables; cover paper-specific meanings, aliases, ambiguities, and author/code/analysis-derived symbol provenance, or mark symbols not applicable only when neither sources nor review derivations use them.
 - [pending] W5 Related work: compare the paper's relevant method groups by mechanism, benefit, limitation, and fairness.
 - [pending] W6 OpenReview cross-check: test public review claims against paper/rebuttal/code evidence, or classify unavailability.
 - [pending] W7 Infrastructure: analyze relevant compute, memory, bandwidth/utilization, interconnect, runtime, data types, and CPU/GPU/NPU heterogeneity.
@@ -36,14 +36,14 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 - [pending] Q4 Every claimed technical point has an evidence classification; unsupported claims are explicit.
 - [pending] Q5 Generated-diagram handling used `responses-doc --input-file analysis.md` and produced a linked PNG, or has a precise limitation.
 - [pending] Q6 Every code claim cites a local path and commit hash when code is available.
-- [pending] Q7 The symbol table covers every variable used in key formulas, metrics, and tables.
+- [pending] Q7 The centralized terminology-and-symbol chapter covers every key paper-specific term and every applicable variable used in key formulas, metrics, and tables; each entry has a source and ambiguity note.
 - [pending] Q8 Ambiguous mechanism terms are qualified by stage and paper/code meaning.
 - [pending] Q9 OpenReview reviews, decision, rebuttal, and discussion were evidence-cross-checked when publicly accessible.
 - [pending] Q10 Gain-attribution statements use matched evidence or are explicitly labeled rough/inferred.
 - [pending] Q11 Checkpoint/config claims come from inspected metadata or are marked unverified.
 - [pending] Q12 Failed tests, extraction tools, downloads, access, and metadata checks are recorded with their effect on conclusions.
 - [pending] Q13 Delegated runs preserved the task packet, produced a schema-compliant handoff and complete artifact manifest, and passed the parent-provided write-isolation mode or reported suspected out-of-folder edits; standalone runs classify this item with reason.
-- [pending] Q14 `deliverable_manifest.json` passes structural and semantic validation and agrees with artifact hashes, visual counts/missing types, evidence status, invocation mode/provenance, frozen checklist/handoff, and limitations.
+- [pending] Q14 `deliverable_manifest.json` passes structural and semantic validation and agrees with the centralized terminology/symbol chapter, key-term/symbol coverage, artifact hashes, visual counts/missing types, evidence status, invocation mode/provenance, frozen checklist/handoff, and limitations.
 - [pending] Q15 Every core design has a rationale entry with source status, concrete target problem, causal mechanism, trade-off, and evidence judgment; inference is never presented as author-stated intent.
 
 ## Final Classification

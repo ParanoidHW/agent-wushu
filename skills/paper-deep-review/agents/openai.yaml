@@ -1,4 +1,4 @@
 interface:
   display_name: "Paper Deep Review"
   short_description: "Auditable single-paper analysis for isolated agents"
-  default_prompt: "Use $paper-deep-review to explain what a paper does, why each core design was chosen, which concrete problem it solves, how the mechanism addresses it, and produce an auditable schema-valid review."
+  default_prompt: "Use $paper-deep-review to explain a paper's terminology and symbols in one sourced chapter, analyze why each core design was chosen and which concrete problem it solves, and produce an auditable schema-valid review."

@@ -17,23 +17,29 @@ Use this template for Chinese paper-review deliverables. Adapt headings when the
 - 图表：列出 Figure/Table 与本地图片路径；标明截图是否包含完整 caption，边距是否已经裁成窄边界。
 - AI 生成分析示意图：`<figures/generated/algorithm-analysis.png or unavailable>`
 
-## 0.1 符号表
+## 0.1 术语与符号解释
 
-每篇论文的符号可能不同，先澄清再解释公式。覆盖核心公式、指标、表格和系统量。
+将术语与符号集中在本节，不要把定义散落在方法、实验和 Infra 各节。所有条目均给出论文或代码来源，并显式说明同名异义、符号复用或论文表述不一致之处。
 
-| 符号 | 含义 | 作用域/索引 | 单位/取值 | 来源 | 易混点 |
-|---|---|---|---|---|---|
-| `<symbol>` | `<meaning>` | `<global/per-layer/per-token/per-request>` | `<unit/range>` | `<Eq./Section/Table>` | `<ambiguity>` |
-
-## 0.2 术语与数据构造说明
+### 0.1.1 术语表
 
 解释论文中特定含义的术语，尤其是容易误读的训练数据、模型角色、mask、budget、benchmark 设定。
 
-| 术语 | 本文含义 | 不等于/易混项 | 证据来源 |
-|---|---|---|---|
-| `<term>` | `<definition in this paper>` | `<what it is not>` | `<Section/Table/Code>` |
+| 术语 | 本文含义 | 别名 | 不等于/易混项 | 证据来源 |
+|---|---|---|---|---|
+| `<term>` | `<definition in this paper>` | `<aliases or none>` | `<what it is not>` | `<Section/Table/Code>` |
 
-## 0.3 AI 生成算法分析示意图
+### 0.1.2 符号表
+
+每篇论文的符号可能不同，先澄清再解释公式。覆盖核心公式、指标、表格和系统量。
+
+| 符号 | 含义 | 性质 | 作用域/索引 | 单位/取值 | 来源 | 易混点 |
+|---|---|---|---|---|---|---|
+| `<symbol>` | `<meaning>` | `<author-defined/code-defined/analysis-derived>` | `<global/per-layer/per-token/per-request>` | `<unit/range>` | `<Eq./Section/Table/analysis derivation>` | `<ambiguity>` |
+
+仅当论文、代码和本分析中的推导公式都没有需要解释的数学/系统符号时，明确写“符号不适用”；不要虚构符号条目。
+
+## 0.2 AI 生成算法分析示意图
 
 如果 `$openrouter-icu-image` 可用且已成功生成图片，在这里插入。该图只能作为分析辅助，不替代论文原图、表格或实验数据。
 
@@ -84,7 +90,7 @@ $$
 $$
 
 解释公式中的变量、单位、系统含义。
-公式中的每个变量都必须能在“0.1 符号表”中找到；如果论文复用了符号或符号含义不一致，在这里显式说明。
+公式中的每个变量都必须能在“0.1.2 符号表”中找到；如果论文复用了符号或符号含义不一致，在这里显式说明。
 
 ### 3.5 训练/实验/部署设计
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agent-wushu.local/schemas/ai-algorithm-survey-deliverable-1.1.0.json",
+  "$id": "https://agent-wushu.local/schemas/ai-algorithm-survey-deliverable-1.2.0.json",
   "title": "AI Algorithm Survey Deliverable Manifest",
   "description": "Machine-readable manifest for one ai-algorithm-survey delivery and its accepted per-paper reviews.",
   "type": "object",
@@ -16,13 +16,14 @@
     "agent_isolation",
     "artifacts",
     "papers",
+    "terminology_and_symbols",
     "synthesis_coverage",
     "visual_qa",
     "presentation",
     "limitations"
   ],
   "properties": {
-    "schema_version": { "const": "1.1.0" },
+    "schema_version": { "const": "1.2.0" },
     "deliverable_type": { "const": "ai-algorithm-survey" },
     "field": {
       "type": "object",
@@ -105,15 +106,17 @@
       "minItems": 0,
       "items": { "$ref": "#/$defs/paperDelivery" }
     },
+    "terminology_and_symbols": { "$ref": "#/$defs/surveyTerminologyAndSymbols" },
     "synthesis_coverage": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["timeline", "taxonomy", "lineage", "comparison", "design_rationales", "infrastructure", "trends", "evidence_caveats"],
+      "required": ["timeline", "taxonomy", "lineage", "comparison", "terminology_and_symbols", "design_rationales", "infrastructure", "trends", "evidence_caveats"],
       "properties": {
         "timeline": { "type": "boolean" },
         "taxonomy": { "type": "boolean" },
         "lineage": { "type": "boolean" },
         "comparison": { "type": "boolean" },
+        "terminology_and_symbols": { "type": "boolean" },
         "design_rationales": { "type": "boolean" },
         "infrastructure": { "type": "boolean" },
         "trends": { "type": "boolean" },
@@ -164,6 +167,9 @@
                   "paper_identity_uniqueness": { "const": true },
                   "agent_task_identity_uniqueness": { "const": true },
                   "paper_manifests_match_entries": { "const": true },
+                  "terminology_symbol_section_consistency": { "const": true },
+                  "canonical_term_sources_valid": { "const": true },
+                  "paper_glossaries_reconciled": { "const": true },
                   "design_rationale_entries_match_paper_manifests": { "const": true },
                   "design_rationale_core_design_coverage": { "const": true },
                   "dispatch_records_match_entries": { "const": true },
@@ -192,10 +198,23 @@
               "taxonomy": { "const": true },
               "lineage": { "const": true },
               "comparison": { "const": true },
+              "terminology_and_symbols": { "const": true },
               "design_rationales": { "const": true },
               "infrastructure": { "const": true },
               "trends": { "const": true },
               "evidence_caveats": { "const": true }
+            }
+          },
+          "terminology_and_symbols": {
+            "properties": {
+              "terms": { "minItems": 1 },
+              "coverage": {
+                "properties": {
+                  "key_terms": { "const": "passed" },
+                  "paper_specific_differences": { "const": "passed" },
+                  "ambiguities": { "const": "passed" }
+                }
+              }
             }
           },
           "papers": {
@@ -206,6 +225,23 @@
                 "design_rationale_analysis": { "const": "passed" },
                 "design_rationales": { "minItems": 1 }
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          { "properties": { "completion_status": { "const": "complete" } } },
+          { "properties": { "terminology_and_symbols": { "properties": { "symbol_applicability": { "const": "applicable" } } } } }
+        ]
+      },
+      "then": {
+        "properties": {
+          "terminology_and_symbols": {
+            "properties": {
+              "coverage": { "properties": { "key_symbols": { "const": "passed" } } }
             }
           }
         }
@@ -372,6 +408,9 @@
             "paper_identity_uniqueness",
             "agent_task_identity_uniqueness",
             "paper_manifests_match_entries",
+            "terminology_symbol_section_consistency",
+            "canonical_term_sources_valid",
+            "paper_glossaries_reconciled",
             "design_rationale_entries_match_paper_manifests",
             "design_rationale_core_design_coverage",
             "dispatch_records_match_entries",
@@ -384,6 +423,9 @@
             "paper_identity_uniqueness": { "type": "boolean" },
             "agent_task_identity_uniqueness": { "type": "boolean" },
             "paper_manifests_match_entries": { "type": "boolean" },
+            "terminology_symbol_section_consistency": { "type": "boolean" },
+            "canonical_term_sources_valid": { "type": "boolean" },
+            "paper_glossaries_reconciled": { "type": "boolean" },
             "design_rationale_entries_match_paper_manifests": { "type": "boolean" },
             "design_rationale_core_design_coverage": { "type": "boolean" },
             "dispatch_records_match_entries": { "type": "boolean" },
@@ -436,6 +478,139 @@
         "mechanism_visual_count": { "type": "integer", "minimum": 0 },
         "result_or_system_visual_count": { "type": "integer", "minimum": 0 },
         "limitations": { "type": "array", "items": { "$ref": "#/$defs/limitation" } }
+      }
+    },
+    "surveyTerminologyAndSymbols": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_path",
+        "section_heading",
+        "terms",
+        "symbol_applicability",
+        "symbols",
+        "coverage"
+      ],
+      "properties": {
+        "document_path": { "const": "synthesis.md" },
+        "section_heading": { "type": "string", "minLength": 1 },
+        "terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/surveyTermEntry" }
+        },
+        "symbol_applicability": { "enum": ["applicable", "not-applicable"] },
+        "symbols": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/surveySymbolEntry" }
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key_terms", "key_symbols", "paper_specific_differences", "ambiguities"],
+          "properties": {
+            "key_terms": { "$ref": "#/$defs/checkStatus" },
+            "key_symbols": { "$ref": "#/$defs/checkStatus" },
+            "paper_specific_differences": { "$ref": "#/$defs/checkStatus" },
+            "ambiguities": { "$ref": "#/$defs/checkStatus" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              { "properties": { "symbol_applicability": { "const": "applicable" } } },
+              { "properties": { "coverage": { "properties": { "key_symbols": { "const": "passed" } } } } }
+            ]
+          },
+          "then": {
+            "properties": {
+              "symbols": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "symbol_applicability": { "const": "not-applicable" } } },
+          "then": {
+            "properties": {
+              "symbols": { "maxItems": 0 },
+              "coverage": { "properties": { "key_symbols": { "const": "not-applicable" } } }
+            }
+          }
+        }
+      ]
+    },
+    "surveyTermEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["term", "canonical_definition", "definition_status", "canonical_sources", "aliases", "paper_specific_usages", "ambiguity_notes"],
+      "properties": {
+        "term": { "type": "string", "minLength": 1 },
+        "canonical_definition": { "type": "string", "minLength": 1 },
+        "definition_status": { "enum": ["paper-stated", "cross-paper-synthesis"] },
+        "canonical_sources": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "aliases": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "paper_specific_usages": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/paperSpecificTermUsage" }
+        },
+        "ambiguity_notes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "surveySymbolEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbol", "meanings", "ambiguity_notes"],
+      "properties": {
+        "symbol": { "type": "string", "minLength": 1 },
+        "meanings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/paperSpecificSymbolMeaning" },
+              { "$ref": "#/$defs/surveyAnalysisSymbolMeaning" }
+            ]
+          }
+        },
+        "ambiguity_notes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "paperSpecificTermUsage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paper_key", "meaning", "source"],
+      "properties": {
+        "paper_key": { "type": "string", "minLength": 1 },
+        "meaning": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 }
+      }
+    },
+    "paperSpecificSymbolMeaning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "paper_key", "meaning", "scope_or_indexing", "units_or_values", "source"],
+      "properties": {
+        "origin": { "const": "paper-specific" },
+        "paper_key": { "type": "string", "minLength": 1 },
+        "meaning": { "type": "string", "minLength": 1 },
+        "scope_or_indexing": { "type": "string", "minLength": 1 },
+        "units_or_values": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 }
+      }
+    },
+    "surveyAnalysisSymbolMeaning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "meaning", "provenance", "scope_or_indexing", "units_or_values", "source"],
+      "properties": {
+        "origin": { "const": "survey-analysis" },
+        "meaning": { "type": "string", "minLength": 1 },
+        "provenance": { "const": "analysis-derived" },
+        "scope_or_indexing": { "type": "string", "minLength": 1 },
+        "units_or_values": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 }
       }
     },
     "designRationale": {

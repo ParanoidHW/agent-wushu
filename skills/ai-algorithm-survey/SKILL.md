@@ -279,6 +279,7 @@ Each paper agent must:
 - inspect each caption and surrounding paper text before using a visual, but exclude that surrounding body text from the crop,
 - record source-page dimensions and the exact crop bounding box, maintain paper-local `figure_inventory.md`, and when crops exist use the contact sheet for triage plus inspect every crop individually at 100% scale; otherwise record the precise visual blocker without a blank placeholder,
 - write `analysis.md`, embedding and discussing every accepted mechanism/evidence visual next to the corresponding explanation; target both required types and document the complete skip evidence for each missing type,
+- place paper-specific terminology and symbols in one centralized `analysis.md` chapter, with sources and ambiguity notes; explicitly mark symbols not applicable when appropriate,
 - analyze why every core design was chosen, what concrete problem it targets, and how it could solve that problem; distinguish author-stated rationale from inference/not-stated and check the rationale against ablations or other evidence,
 - trace implementation claims to source code, operator APIs, kernel code, or an explicitly labeled inference,
 - complete the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop,
@@ -307,6 +308,7 @@ Include:
 - taxonomy of method families,
 - lineage graph or relation table showing which paper extends, replaces, critiques, or benchmarks against which earlier work,
 - comparison table by problem formulation, core mechanism, data/benchmark, metrics, compute/system cost, strengths, and limitations,
+- one centralized terminology-and-symbol chapter that normalizes key field terms while preserving paper-specific meanings, aliases, overloaded symbols, and source evidence; label each normalized definition as paper-stated or cross-paper synthesis and cite its canonical sources,
 - evolution of assumptions, architectures, training objectives, inference procedures, and evaluation protocols,
 - evolution of design rationales: which concrete failure modes or bottlenecks motivated each change, whether the papers state those motivations explicitly, which alternatives/trade-offs were available, and whether later evidence supports or revises them,
 - soft/hardware infrastructure evolution, including data types, bandwidth utilization, CPU/GPU/NPU heterogeneity, kernels/operators, memory, interconnect, serving, and deployment constraints,
@@ -347,7 +349,7 @@ After Section 8 and any requested presentation are complete, finalize the survey
 2. Use the preliminary result to finalize `execution_checklist.md`, then freeze every referenced global and per-paper artifact.
 3. Recompute frozen artifact hashes in the deliverable manifest, rerun structural and semantic validation, and freeze the final manifest. A `passed` validation must have an empty error list; do not modify referenced artifacts afterward without restarting finalization.
 
-Semantic validation must confirm actual relative paths and hashes, selected-paper count equals the paper array length, paper keys/folders/dispatch IDs and runtime agent task/IDs are unique, every paper entry and per-design rationale array matches its accepted paper manifest and covers all core designs, global visual totals match paper manifests plus the merged inventory, and the frozen checklist agrees with the final manifest.
+Semantic validation must confirm actual relative paths and hashes, selected-paper count equals the paper array length, paper keys/folders/dispatch IDs and runtime agent task/IDs are unique, the centralized terminology/symbol chapter matches the manifest, gives every canonical definition valid sources and a paper-stated/cross-paper-synthesis status, and reconciles accepted paper glossaries without erasing paper-specific differences, every paper entry and per-design rationale array matches its accepted paper manifest and covers all core designs, global visual totals match paper manifests plus the merged inventory, and the frozen checklist agrees with the final manifest.
 
 ## Presentation Deliverables
 
@@ -384,6 +386,7 @@ Before finishing:
 - Confirm each selected method paper completes the `problem -> original-paper visual -> mechanism -> code/operator/kernel path -> claimed evidence -> limitation` loop.
 - Confirm each selected paper analyzes why its core designs were chosen, the specific problems they address, the causal mechanism, alternatives/trade-offs, and supporting evidence, while separating author-stated rationale from inference or missing rationale.
 - Confirm synthesis claims cite selected papers or their `analysis.md` files; label cross-paper inferences explicitly.
+- Confirm `synthesis.md` contains one centralized terminology-and-symbol chapter, defines key field terms, and preserves paper-specific usages and symbol meanings with sources even when symbols are not overloaded. Mark symbols not applicable only when every accepted paper glossary does so and the synthesis introduces no analysis-derived symbols; never invent entries.
 - If a presentation was requested, confirm every available core-paper visual has its figure/table number and PDF page; for accepted no-visual papers, confirm sourced alternative evidence and the limitation are visible. Confirm the rendered deck passed visual QA.
 - If a presentation was requested, confirm every core paper's design rationale, concrete target problem, causal mechanism, alternatives/trade-offs, and rationale evidence are visible or recorded in speaker notes with author-stated/inferred/not-stated qualification.
 - If `$openrouter-icu-image` was available, confirm `synthesis.md` was passed as the `responses-doc --input-file` reference document, `figures/generated/survey-trends-infra.png` exists, and it is linked from `synthesis.md`; if unavailable or failed, state the limitation.

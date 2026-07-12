@@ -77,8 +77,8 @@ Treat this skill as a required workflow rather than optional guidance.
    - For every claimed technical point, check whether the paper provides direct ablation, replacement baseline, sensitivity analysis, controlled experiment, mechanism visualization, theoretical proof, or code/config evidence. Mark unsupported points explicitly as unverified, correlation-only, or plausible but not isolated.
    - Use LaTeX math for formulas. Do not leave formulas as plain-text approximations when exact notation matters.
    - Mark assumptions and inferred calculations explicitly.
-   - Build a **symbol table before the method/formula discussion**. For every symbol used in key equations or metrics, record its meaning, scope/indexing, units if any, source equation/section, and any paper-specific ambiguity. Do not assume a symbol has the same meaning across papers.
-   - Add a short **terminology/data-construction clarification** for non-obvious terms such as regenerated data, teacher/student logits, oracle/target/draft model, temperature setting, budget, tree width/depth, or benchmark variants.
+   - Build one centralized **terminology and symbol explanation** chapter before the method/formula discussion; do not scatter glossary definitions across unrelated sections. Define paper-specific terms and every symbol used in key equations, metrics, tables, or reviewer-derived formulas, including meaning, provenance (`author-defined`, `code-defined`, or `analysis-derived`), scope/indexing, units or values, source equation/section/derivation, and ambiguity. Do not assume a symbol has the same meaning across papers.
+   - Cover non-obvious terms such as regenerated data, teacher/student logits, oracle/target/draft model, temperature setting, budget, tree width/depth, or benchmark variants. Mark symbols `not-applicable` only when neither the source nor the review uses meaningful symbols; do not invent entries.
    - Separate **paper-level conceptual claims** from **implementation-level behavior**. If a term such as causal mask, tree mask, block mask, branch conditioning, verification, or drafting appears in multiple stages, state exactly which stage it belongs to and whether the code implements the same object.
    - When the paper's prose is imprecise, reconcile it against equations, figures, appendix text, and code before writing the review. Prefer a qualified statement over copying an ambiguous phrase.
 
@@ -138,8 +138,7 @@ Treat this skill as a required workflow rather than optional guidance.
    - Include OpenReview public-review cross-check when available, combining reviewer concerns with paper content, rebuttal, appendix, experiments, and code evidence instead of listing reviews separately.
    - Include the technical-claim evidence matrix before or inside the key-results section, so claimed technical points are visibly tied to ablation/mechanism evidence or marked as unsupported.
    - Include the design-rationale matrix in the method section. A component description without its stated/inferred rationale, concrete target problem, causal mechanism, and evidence status is incomplete.
-   - Include the symbol table near the top before the method section.
-   - Include a terminology/data-construction clarification when the paper uses paper-specific names for datasets, variants, generated data, budgets, masks, or model roles.
+   - Include one centralized terminology-and-symbol chapter near the top before the method section. Put both the term table and symbol table inside it, and make every manifest entry traceable to this chapter and its paper/code source or explicit reviewer derivation.
    - Include images inline near the discussion they support.
    - End with practical limitations, research inspirations, and unresolved reading questions.
 
@@ -157,7 +156,7 @@ Treat this skill as a required workflow rather than optional guidance.
 
 After Workflow step 11, use this freeze protocol:
 
-1. Write the delegated `agent_handoff.md` when applicable, then create a preliminary `deliverable_manifest.json` and run Draft 2020-12 structural validation plus every `semantic_validation` check required by the schema.
+1. Write the delegated `agent_handoff.md` when applicable, then create a preliminary `deliverable_manifest.json`, including the centralized terminology/symbol chapter location and entries, and run Draft 2020-12 structural validation plus every `semantic_validation` check required by the schema.
 2. In delegated runs, generate and verify a preliminary `artifact_manifest.sha256`. Use these preliminary results to finalize every checklist/handoff status, then freeze `review_checklist.md`, `agent_handoff.md`, `analysis.md`, inventories, figures, and other referenced artifacts.
 3. Recompute all frozen artifact hashes in `deliverable_manifest.json`, rerun structural and semantic validation, and freeze the final deliverable manifest. A `passed` validation must have an empty error list.
 4. In delegated runs, regenerate and verify `artifact_manifest.sha256` last so it covers the frozen task packet, checklist, handoff, deliverable manifest, and all other files except itself. Do not edit any covered file afterward; on failure, restart finalization from step 1.
@@ -170,7 +169,7 @@ Before finishing:
 
 - Confirm `review_checklist.md` exists, was updated throughout the run, and has no pending or unclassified mandatory items.
 - Confirm `deliverable_manifest.json` exists, conforms to `references/deliverable-schema.json`, and agrees with artifact paths, hashes, visual counts, evidence status, invocation mode, and limitations.
-- Confirm `semantic_validation` passed: artifact paths/hashes resolve, every core design has a complete rationale entry consistent with `analysis.md`, visual counts and missing types agree, delegated provenance hashes match, and the frozen checklist/handoff agree with the final manifest.
+- Confirm `semantic_validation` passed: artifact paths/hashes resolve, terminology/symbol entries match the centralized `analysis.md` chapter and cover key terms/applicable symbols, every core design has a complete rationale entry consistent with `analysis.md`, visual counts and missing types agree, delegated provenance hashes match, and the frozen checklist/handoff agree with the final manifest.
 - Confirm `figure_inventory.md` exists; if crops exist, confirm `figures/contact-sheet.png` exists and every counted crop has a complete inventory row and reviewed QA status. If no crop exists, confirm the precise blocker and alternative evidence are recorded.
 - Confirm all Markdown image links resolve.
 - Use the contact sheet for crop triage, then open every selected crop individually at 100% scale. Confirm exactly one numbered figure/table with its full caption, recorded source-page dimensions/bounding box, tight margins, and no next paragraph, page chrome, section heading, neighboring content, unrelated equation, excessive whitespace, or truncated caption.
@@ -179,7 +178,7 @@ Before finishing:
 - Confirm every core design has a design-rationale entry separating author-stated rationale from inference, naming the concrete problem it targets, explaining the causal mechanism, and checking whether evidence supports that explanation.
 - If `$openrouter-icu-image` was available, confirm `analysis.md` was passed as the `responses-doc --input-file` reference document, the generated analysis diagram exists, and it is linked from `analysis.md`; if unavailable or failed, state the limitation.
 - Confirm code claims include file paths and commit hashes.
-- Confirm the symbol table covers every variable used in key formulas, metrics, and tables.
+- Confirm the centralized terminology-and-symbol chapter defines every key paper-specific term and every variable used in key formulas, metrics, and tables; require source and ambiguity notes for every entry.
 - Confirm ambiguous mechanism terms are stage-qualified: drafting vs tree construction vs target verification vs serving/runtime.
 - For OpenReview papers, confirm public reviews/meta-review/decision/rebuttal were checked when accessible, saved or summarized in `openreview_reviews.md`, and cross-checked against paper content, appendix, rebuttal, experiments, and code before drawing conclusions.
 - Confirm gain-attribution statements are supported by matched ablations or explicitly marked as rough/inferred decompositions.

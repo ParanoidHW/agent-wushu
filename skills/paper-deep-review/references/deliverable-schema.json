@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://agent-wushu.local/schemas/paper-deep-review-deliverable-1.1.0.json",
+  "$id": "https://agent-wushu.local/schemas/paper-deep-review-deliverable-1.2.0.json",
   "title": "Paper Deep Review Deliverable Manifest",
   "description": "Machine-readable manifest for one paper-deep-review delivery.",
   "type": "object",
@@ -15,12 +15,13 @@
     "semantic_validation",
     "artifacts",
     "visual_evidence",
+    "terminology_and_symbols",
     "design_rationales",
     "evidence_checks",
     "limitations"
   ],
   "properties": {
-    "schema_version": { "const": "1.1.0" },
+    "schema_version": { "const": "1.2.0" },
     "deliverable_type": { "const": "paper-deep-review" },
     "invocation_mode": { "enum": ["standalone", "delegated"] },
     "paper": {
@@ -95,6 +96,7 @@
         "individual_crop_qa": { "enum": ["passed", "blocked", "not-applicable"] }
       }
     },
+    "terminology_and_symbols": { "$ref": "#/$defs/terminologyAndSymbols" },
     "design_rationales": {
       "type": "array",
       "items": { "$ref": "#/$defs/designRationale" }
@@ -187,6 +189,8 @@
               "checks": {
                 "properties": {
                   "artifact_paths_and_hashes": { "const": true },
+                  "terminology_symbol_section_consistency": { "const": true },
+                  "key_term_symbol_coverage": { "const": true },
                   "design_rationale_evidence_consistency": { "const": true },
                   "design_rationale_core_design_coverage": { "const": true },
                   "visual_count_sum": { "const": true },
@@ -215,7 +219,35 @@
               "gain_attribution": { "const": "passed" }
             }
           },
+          "terminology_and_symbols": {
+            "properties": {
+              "terms": { "minItems": 1 },
+              "coverage": {
+                "properties": {
+                  "key_terms": { "const": "passed" },
+                  "ambiguities": { "const": "passed" }
+                }
+              }
+            }
+          },
           "design_rationales": { "minItems": 1 }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          { "properties": { "completion_status": { "const": "complete" } } },
+          { "properties": { "terminology_and_symbols": { "properties": { "symbol_applicability": { "const": "applicable" } } } } }
+        ]
+      },
+      "then": {
+        "properties": {
+          "terminology_and_symbols": {
+            "properties": {
+              "coverage": { "properties": { "key_symbols": { "const": "passed" } } }
+            }
+          }
         }
       }
     },
@@ -410,6 +442,8 @@
           "additionalProperties": false,
           "required": [
             "artifact_paths_and_hashes",
+            "terminology_symbol_section_consistency",
+            "key_term_symbol_coverage",
             "design_rationale_evidence_consistency",
             "design_rationale_core_design_coverage",
             "visual_count_sum",
@@ -419,6 +453,8 @@
           ],
           "properties": {
             "artifact_paths_and_hashes": { "type": "boolean" },
+            "terminology_symbol_section_consistency": { "type": "boolean" },
+            "key_term_symbol_coverage": { "type": "boolean" },
             "design_rationale_evidence_consistency": { "type": "boolean" },
             "design_rationale_core_design_coverage": { "type": "boolean" },
             "visual_count_sum": { "type": "boolean" },
@@ -493,6 +529,91 @@
           }
         }
       ]
+    },
+    "terminologyAndSymbols": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "document_path",
+        "section_heading",
+        "terms",
+        "symbol_applicability",
+        "symbols",
+        "coverage"
+      ],
+      "properties": {
+        "document_path": { "const": "analysis.md" },
+        "section_heading": { "type": "string", "minLength": 1 },
+        "terms": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/termEntry" }
+        },
+        "symbol_applicability": { "enum": ["applicable", "not-applicable"] },
+        "symbols": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/symbolEntry" }
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["key_terms", "key_symbols", "ambiguities"],
+          "properties": {
+            "key_terms": { "$ref": "#/$defs/checkStatus" },
+            "key_symbols": { "$ref": "#/$defs/checkStatus" },
+            "ambiguities": { "$ref": "#/$defs/checkStatus" }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              { "properties": { "symbol_applicability": { "const": "applicable" } } },
+              { "properties": { "coverage": { "properties": { "key_symbols": { "const": "passed" } } } } }
+            ]
+          },
+          "then": {
+            "properties": {
+              "symbols": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "symbol_applicability": { "const": "not-applicable" } } },
+          "then": {
+            "properties": {
+              "symbols": { "maxItems": 0 },
+              "coverage": { "properties": { "key_symbols": { "const": "not-applicable" } } }
+            }
+          }
+        }
+      ]
+    },
+    "termEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["term", "definition", "aliases", "sources", "ambiguity_notes"],
+      "properties": {
+        "term": { "type": "string", "minLength": 1 },
+        "definition": { "type": "string", "minLength": 1 },
+        "aliases": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "sources": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "ambiguity_notes": { "type": "string", "minLength": 1 }
+      }
+    },
+    "symbolEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["symbol", "meaning", "provenance", "scope_or_indexing", "units_or_values", "sources", "ambiguity_notes"],
+      "properties": {
+        "symbol": { "type": "string", "minLength": 1 },
+        "meaning": { "type": "string", "minLength": 1 },
+        "provenance": { "enum": ["author-defined", "code-defined", "analysis-derived"] },
+        "scope_or_indexing": { "type": "string", "minLength": 1 },
+        "units_or_values": { "type": "string", "minLength": 1 },
+        "sources": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "ambiguity_notes": { "type": "string", "minLength": 1 }
+      }
     },
     "limitation": {
       "type": "object",
