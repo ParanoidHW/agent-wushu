@@ -656,6 +656,10 @@
           <input id="autoRefresh" type="checkbox" checked>
           自动刷新
         </label>
+        <label class="toggle" title="隐藏由 PreToolUse hook 写入的工具调用记录">
+          <input id="ignorePreToolUse" type="checkbox" checked>
+          忽略 PreToolUse
+        </label>
         <button id="refreshNow" type="button" disabled>刷新</button>
         <select id="backgroundTheme" aria-label="背景颜色">
           <option value="dark">深色技术</option>
@@ -695,6 +699,7 @@
     const openFileHandle = document.querySelector("#openFileHandle");
     const restoreLast = document.querySelector("#restoreLast");
     const autoRefresh = document.querySelector("#autoRefresh");
+    const ignorePreToolUse = document.querySelector("#ignorePreToolUse");
     const refreshNow = document.querySelector("#refreshNow");
     const backgroundTheme = document.querySelector("#backgroundTheme");
     const expandAll = document.querySelector("#expandAll");
@@ -704,7 +709,9 @@
     const DB_STORE = "file-handles";
     const DB_KEY = "last-file";
     const THEME_KEY = "interaction-viewer-background";
+    const IGNORE_PRETOOLUSE_KEY = "interaction-viewer-ignore-pretooluse";
     let currentSource = null;
+    let currentRecord = null;
     let refreshTimer = null;
     let droppedDepth = 0;
 
@@ -739,6 +746,11 @@
       } else {
         stopAutoRefresh();
       }
+    });
+
+    ignorePreToolUse.addEventListener("change", () => {
+      localStorage.setItem(IGNORE_PRETOOLUSE_KEY, String(ignorePreToolUse.checked));
+      renderCurrentRecord({ filtered: true });
     });
 
     refreshNow.addEventListener("click", async () => {
@@ -782,6 +794,7 @@
 
     window.addEventListener("load", async () => {
       initializeBackgroundTheme();
+      initializePreToolUseFilter();
       await initializePersistentFileControls();
       renderEnhancements();
     });
@@ -798,6 +811,11 @@
       if (persist) {
         localStorage.setItem(THEME_KEY, theme);
       }
+    }
+
+    function initializePreToolUseFilter() {
+      const saved = localStorage.getItem(IGNORE_PRETOOLUSE_KEY);
+      ignorePreToolUse.checked = saved === null || saved === "true";
     }
 
     async function openRememberedFile() {
@@ -877,6 +895,7 @@
         const file = await readSourceFile(source);
         const text = await file.text();
         const record = parseInteractionRecord(text);
+        currentRecord = record;
         currentSource = {
           ...source,
           name: source.name || file.name,
@@ -897,6 +916,7 @@
         }
       } catch (error) {
         renderError(error.message || String(error));
+        currentRecord = null;
         currentSource = null;
         updateRefreshControls();
       }
@@ -914,6 +934,7 @@
 
         const text = await file.text();
         const record = parseInteractionRecord(text);
+        currentRecord = record;
         currentSource.stamp = nextStamp;
         renderRecord(record, currentSource.name, {
           source: "refresh",
@@ -1105,6 +1126,14 @@
       return { metadata, turns };
     }
 
+    function renderCurrentRecord(state = {}) {
+      if (!currentRecord) return;
+      renderRecord(currentRecord, currentSource?.name || "Interaction Record", {
+        timestamp: new Date(),
+        ...state
+      });
+    }
+
     function extractFrontMatter(source) {
       if (!source.startsWith("---\n")) {
         return { frontMatter: "", body: source };
@@ -1228,6 +1257,8 @@
     }
 
     function renderRecord(record, fileName, state = {}) {
+      const visibleTurns = filterTurns(record.turns);
+      const hiddenTurns = record.turns.length - visibleTurns.length;
       const title = getMetadataValue(record.metadata, "title") || "Interaction Record Viewer";
       const topic = getMetadataValue(record.metadata, "topic");
       pageTitle.textContent = title;
@@ -1237,16 +1268,26 @@
       const refreshText = currentSource?.canReadFresh
         ? `自动刷新${autoRefresh.checked ? "开启" : "关闭"}`
         : "快照模式";
-      const actionText = state.refreshed ? "已刷新" : "已加载";
+      const actionText = state.filtered ? "已更新筛选" : state.refreshed ? "已刷新" : "已加载";
       fileNameEl.textContent = `${fileName} · ${actionText} ${loadedAt} · ${refreshText}`;
 
       message.className = "notice";
-      message.innerHTML = `<strong>${escapeHtml(actionText)}。</strong> ${escapeHtml(String(record.turns.length))} 轮 QA，可单独折叠和展开。`;
-      summaryEl.textContent = `${record.turns.length} 轮 QA`;
+      const filterText = hiddenTurns > 0 ? `，已忽略 ${hiddenTurns} 条 PreToolUse 记录` : "";
+      message.innerHTML = `<strong>${escapeHtml(actionText)}。</strong> ${escapeHtml(String(visibleTurns.length))} 轮 QA${escapeHtml(filterText)}，可单独折叠和展开。`;
+      summaryEl.textContent = `${visibleTurns.length} 轮 QA${hiddenTurns > 0 ? ` · 已忽略 ${hiddenTurns}` : ""}`;
 
       renderMetadata(record.metadata);
-      renderTurns(record.turns);
+      renderTurns(visibleTurns);
       renderEnhancements();
+    }
+
+    function filterTurns(turns) {
+      if (!ignorePreToolUse.checked) return turns;
+      return turns.filter((turn) => !isPreToolUseTurn(turn));
+    }
+
+    function isPreToolUseTurn(turn) {
+      return /^\s*hook_event_name\s*:\s*pretooluse\s*$/im.test(turn.notes || "");
     }
 
     function renderMetadata(metadata) {
@@ -1272,6 +1313,10 @@
 
     function renderTurns(turns) {
       turnList.innerHTML = "";
+      if (turns.length === 0) {
+        turnList.innerHTML = '<div class="empty">当前筛选条件下没有可显示的交互记录。</div>';
+        return;
+      }
       turns.forEach((turn, index) => {
         const details = document.createElement("details");
         details.className = "turn";
