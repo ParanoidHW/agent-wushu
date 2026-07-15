@@ -9,6 +9,12 @@
             "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/hooks/hooks/save_compact_tasks.py\" -o compact-task-state.md --state-file .compact-task-state.json --quiet",
             "timeout": 30,
             "statusMessage": "Saving compact task state"
+          },
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/hooks/hooks/record_interaction.py\" -o interaction-history.md --state-file .interaction-recorder-state.json --title \"Codex Interaction History\" --topic \"自动记录 Codex 用户、Agent、子代理与上下文压缩交互\" --user-name \"我\" --agent-name \"Codex\" --source \"codex-compact-hook\" --include-process --quiet",
+            "timeout": 30,
+            "statusMessage": "Recording compact context"
           }
         ]
       }
@@ -18,9 +24,21 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 ~/.codex/hooks/record_interaction.py -o interaction-history.md --state-file .interaction-recorder-state.json --title \"Codex Interaction History\" --topic \"自动记录 Codex 用户与 Agent 的主题相关交互\" --user-name \"我\" --agent-name \"Codex\" --source \"codex-tool-hook\" --quiet",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/hooks/hooks/record_interaction.py\" -o interaction-history.md --state-file .interaction-recorder-state.json --title \"Codex Interaction History\" --topic \"自动记录 Codex 用户、Agent、子代理与上下文压缩交互\" --user-name \"我\" --agent-name \"Codex\" --source \"codex-tool-hook\" --quiet",
             "timeout": 30,
             "statusMessage": "Recording tool prompt history"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/hooks/hooks/record_interaction.py\" -o interaction-history.md --state-file .interaction-recorder-state.json --title \"Codex Interaction History\" --topic \"自动记录 Codex 用户、Agent、子代理与上下文压缩交互\" --user-name \"我\" --agent-name \"Codex\" --source \"codex-subagent-hook\" --include-process --quiet",
+            "timeout": 30,
+            "statusMessage": "Recording subagent result"
           }
         ]
       }
@@ -30,7 +48,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "/usr/bin/python3 ~/.codex/hooks/record_interaction.py -o interaction-history.md --state-file .interaction-recorder-state.json --title \"Codex Interaction History\" --topic \"自动记录 Codex 用户与 Agent 的主题相关交互\" --user-name \"我\" --agent-name \"Codex\" --source \"codex-stop-hook\" --include-process --quiet",
+            "command": "/usr/bin/python3 \"$(git rev-parse --show-toplevel)/hooks/hooks/record_interaction.py\" -o interaction-history.md --state-file .interaction-recorder-state.json --title \"Codex Interaction History\" --topic \"自动记录 Codex 用户、Agent、子代理与上下文压缩交互\" --user-name \"我\" --agent-name \"Codex\" --source \"codex-stop-hook\" --include-process --quiet",
             "timeout": 30,
             "statusMessage": "Recording interaction history"
           }

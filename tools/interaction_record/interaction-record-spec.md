@@ -153,12 +153,12 @@ A compliant viewer should:
 
 ## Hook Recorder
 
-`record_interaction.py` can append records in this format automatically.
+`hooks/hooks/record_interaction.py` can append records in this format automatically.
 
 Explicit append:
 
 ```bash
-python3 record_interaction.py \
+python3 hooks/hooks/record_interaction.py \
   -o interaction-history.md \
   append \
   --user "User request" \
@@ -169,7 +169,19 @@ python3 record_interaction.py \
 Hook stdin mode:
 
 ```bash
-cat hook-event.json | python3 record_interaction.py -o interaction-history.md
+cat hook-event.json | python3 hooks/hooks/record_interaction.py -o interaction-history.md
+```
+
+To preserve selected intermediate results from a Codex transcript, add
+`--include-process`. The recorder stores public `commentary` updates and
+`reasoning.summary` entries in `Notes` under `Key process`; it never reads
+encrypted reasoning or records raw tool output. Entries are deduplicated and
+bounded to keep each turn readable.
+
+```bash
+cat stop-event.json | python3 hooks/hooks/record_interaction.py \
+  -o interaction-history.md \
+  --include-process
 ```
 
 Supported hook payload shapes include:
@@ -179,3 +191,8 @@ Supported hook payload shapes include:
 - `{ "prompt": "...", "response": "..." }`
 
 The recorder ignores `system`, `developer`, `tool`, and `function` roles, and skips content parts with types such as `tool_use`, `tool_result`, `function_call`, and `function_result`.
+
+`SubagentStop` records are tagged `subagent` and include the subagent type,
+identifier, assigned task when supplied by the hook, and a public completion
+summary. `PreCompact` and `PostCompact` records are tagged `compact` and retain
+the trigger plus the latest public turn context when a transcript is available.

@@ -141,9 +141,12 @@ python3 scripts/openrouter_icu_image.py responses-doc \
 
 包含：
 
-- `record_interaction.py`：追加交互记录，支持 hook stdin payload。
+- `hooks/hooks/record_interaction.py`：唯一的交互记录脚本，支持 hook stdin payload。
 - `interaction-record-spec.md`：Markdown 交互记录格式。
 - `interaction-viewer.html`：单文件 HTML 查看器。
+
+`Stop` hook 可加入 `--include-process`，将公开的阶段性进度和 reasoning summary 汇总到每轮记录的 `Notes / Key process`；不会保存完整隐藏推理、加密内容或工具输出。
+`SubagentStop` 会记录子代理的任务、公开完成摘要及代理标识；`PreCompact` 会记录压缩触发原因、最近公开上下文和阶段性进度。
 
 查看器特性：
 
@@ -157,7 +160,7 @@ python3 scripts/openrouter_icu_image.py responses-doc \
 
 ```bash
 # 追加一轮记录
-python3 tools/interaction_record/record_interaction.py \
+python3 hooks/hooks/record_interaction.py \
   -o interaction-history.md \
   append \
   --user "用户问题" \

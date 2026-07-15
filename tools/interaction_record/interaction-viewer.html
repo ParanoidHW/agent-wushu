@@ -683,7 +683,7 @@
       <span id="fileName"></span>
     </div>
     <section id="turnList" class="turn-list">
-      <div class="empty">导入文件后，每轮 QA 会显示为一个可单独折叠和展开的区块。</div>
+      <div class="empty">导入文件后，每条交互记录会显示为一个可单独折叠和展开的区块。</div>
     </section>
   </main>
 
@@ -1262,7 +1262,7 @@
       const title = getMetadataValue(record.metadata, "title") || "Interaction Record Viewer";
       const topic = getMetadataValue(record.metadata, "topic");
       pageTitle.textContent = title;
-      pageSubtitle.textContent = topic || "导入符合 spec 的 Markdown 文件，按轮次折叠查看用户和 Agent 的交互。";
+      pageSubtitle.textContent = topic || "导入符合 spec 的 Markdown 文件，按记录折叠查看用户、Agent、子代理与上下文压缩事件。";
 
       const loadedAt = formatTime(state.timestamp || new Date());
       const refreshText = currentSource?.canReadFresh
@@ -1273,8 +1273,8 @@
 
       message.className = "notice";
       const filterText = hiddenTurns > 0 ? `，已忽略 ${hiddenTurns} 条 PreToolUse 记录` : "";
-      message.innerHTML = `<strong>${escapeHtml(actionText)}。</strong> ${escapeHtml(String(visibleTurns.length))} 轮 QA${escapeHtml(filterText)}，可单独折叠和展开。`;
-      summaryEl.textContent = `${visibleTurns.length} 轮 QA${hiddenTurns > 0 ? ` · 已忽略 ${hiddenTurns}` : ""}`;
+      message.innerHTML = `<strong>${escapeHtml(actionText)}。</strong> ${escapeHtml(String(visibleTurns.length))} 条记录${escapeHtml(filterText)}，可单独折叠和展开。`;
+      summaryEl.textContent = `${visibleTurns.length} 条记录${hiddenTurns > 0 ? ` · 已忽略 ${hiddenTurns}` : ""}`;
 
       renderMetadata(record.metadata);
       renderTurns(visibleTurns);

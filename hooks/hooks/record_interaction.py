@@ -200,6 +200,13 @@ def turns_from_payload(
     include_partial: bool = False,
     include_process: bool = False,
 ) -> list[Turn]:
+    if isinstance(payload, dict):
+        event_name = hook_event_name(payload)
+        if event_name == "subagentstop":
+            return turns_from_subagent_stop_payload(payload)
+        if event_name in {"precompact", "postcompact"}:
+            return turns_from_compact_hook_payload(payload, include_process=include_process)
+
     if isinstance(payload, dict) and is_tool_hook_payload(payload):
         return turns_from_tool_hook_payload(payload)
 
@@ -215,6 +222,134 @@ def turns_from_payload(
         return turns_from_codex_payload(payload, include_process=include_process)
 
     return []
+
+
+def hook_event_name(payload: dict[str, Any]) -> str:
+    event_name = normalize_role(
+        extract_first_text(payload, "hook_event_name", "hookEventName", "event_name", "eventName")
+    )
+    if event_name:
+        return event_name
+
+    nested = payload.get("event")
+    if isinstance(nested, dict):
+        return hook_event_name(nested)
+    return ""
+
+
+def turns_from_subagent_stop_payload(payload: dict[str, Any]) -> list[Turn]:
+    agent_id = extract_first_text(payload, "agent_id", "agentId") or "unknown"
+    agent_type = extract_first_text(payload, "agent_type", "agentType") or "subagent"
+    task = extract_first_text(
+        payload,
+        "prompt",
+        "user_prompt",
+        "userPrompt",
+        "task",
+        "description",
+        "instruction",
+    )
+    summary = extract_first_text(
+        payload,
+        "last_assistant_message",
+        "lastAssistantMessage",
+        "last_agent_message",
+        "lastAgentMessage",
+        "summary",
+        "result",
+        "response",
+        "output",
+    )
+    if not summary:
+        summary = "Subagent stopped without a public completion summary."
+
+    user = f"Subagent `{agent_type}` (`{agent_id}`) completed."
+    if task:
+        user = f"{user}\n\nAssigned task:\n{compact_process_text(task)}"
+
+    notes = [part for part in [codex_note(payload)] if part]
+    notes.extend([f"agent_id: {agent_id}", f"agent_type: {agent_type}"])
+    return [
+        Turn(
+            user=user,
+            agent=summary,
+            title=f"Subagent {agent_type} completed",
+            notes="\n".join(notes),
+            tags="codex, subagent, hook",
+        )
+    ]
+
+
+def turns_from_compact_hook_payload(payload: dict[str, Any], include_process: bool) -> list[Turn]:
+    event_name = hook_event_name(payload) or "precompact"
+    trigger = extract_first_text(payload, "trigger", "compact_trigger", "compactTrigger", "reason", "source")
+    trigger = trigger or "unknown"
+    context_turn = latest_transcript_turn_from_payload(payload, include_process=include_process)
+    agent = extract_first_text(
+        payload,
+        "last_assistant_message",
+        "lastAssistantMessage",
+        "last_agent_message",
+        "lastAgentMessage",
+        "summary",
+    )
+    if not agent and context_turn:
+        agent = context_turn.agent
+    if not agent:
+        agent = "Context compaction snapshot recorded."
+
+    notes = [part for part in [codex_note(payload)] if part]
+    notes.append(f"compact_trigger: {trigger}")
+    if context_turn:
+        notes.append(f"Last user request:\n{compact_process_text(context_turn.user)}")
+        process = key_process_from_notes(context_turn.notes)
+        if process:
+            notes.append(process)
+
+    return [
+        Turn(
+            user=f"Context compaction requested ({trigger}).",
+            agent=agent,
+            title=f"Context compact ({trigger})",
+            notes="\n\n".join(notes),
+            tags="codex, compact, hook",
+        )
+    ]
+
+
+def latest_transcript_turn_from_payload(payload: dict[str, Any], include_process: bool) -> Turn | None:
+    has_transcript_reference = any(
+        key in payload
+        for key in (
+            "transcript_path",
+            "transcriptPath",
+            "agent_transcript_path",
+            "agentTranscriptPath",
+            "rollout_path",
+            "rolloutPath",
+            "session_id",
+            "sessionId",
+        )
+    )
+    if not has_transcript_reference:
+        return None
+
+    transcript = transcript_path_from_payload(payload)
+    if not transcript:
+        return None
+    turns = turns_from_codex_transcript(transcript, include_process=include_process)
+    return turns[-1] if turns else None
+
+
+def key_process_from_notes(notes: str) -> str:
+    marker = "Key process:"
+    index = notes.find(marker)
+    if index == -1:
+        return ""
+    process = strip_noise(notes[index:]).strip()
+    if len(process) <= 1200:
+        return process
+    return process[:1197].rstrip() + "..."
 
 
 def is_tool_hook_payload(payload: dict[str, Any]) -> bool:
