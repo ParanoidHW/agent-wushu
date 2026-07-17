@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenCode Session Log Viewer</title>
+  <style>
+    :root { color-scheme: light; --ink:#172126; --muted:#65727a; --line:#d7e0e2; --paper:#fff; --page:#eef3f3; --accent:#007c77; --progress:#f5fbfa; --result:#f7f8ff; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font:15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--ink); background:var(--page); }
+    header { position:sticky; top:0; z-index:2; display:flex; gap:12px; align-items:center; padding:12px 24px; background:#103538; color:#fff; border-bottom:1px solid #0a282a; }
+    header h1 { margin:0 auto 0 0; font-size:16px; font-weight:650; letter-spacing:0; }
+    button { cursor:pointer; border:1px solid #86a5a4; border-radius:4px; padding:7px 10px; font:inherit; color:#fff; background:transparent; }
+    button:hover { background:#245255; } button:disabled { opacity:.45; cursor:not-allowed; }
+    .layout { display:grid; grid-template-columns:260px minmax(0, 1fr); max-width:1440px; min-height:calc(100vh - 53px); margin:auto; }
+    aside { padding:24px 18px; border-right:1px solid var(--line); background:#f7fafa; }
+    aside h2 { margin:0 0 10px; font-size:12px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+    #toc { list-style:none; padding:0; margin:0; } #toc a { display:block; padding:6px 8px; color:#345154; text-decoration:none; border-left:2px solid transparent; } #toc a:hover { color:var(--accent); border-left-color:var(--accent); background:#e7f2f1; }
+    main { padding:30px clamp(20px, 5vw, 62px) 60px; background:var(--paper); }
+    #empty { max-width:620px; margin:12vh auto; text-align:center; color:var(--muted); } #empty strong { display:block; color:var(--ink); font-size:20px; margin-bottom:8px; }
+    .meta { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-bottom:20px; margin-bottom:22px; border-bottom:1px solid var(--line); color:var(--muted); font-size:13px; }
+    .meta h2 { margin:0 auto 0 0; color:var(--ink); font-size:22px; letter-spacing:0; }
+    .badge { padding:2px 7px; border:1px solid var(--line); border-radius:3px; background:#f7fafa; }
+    details { margin:12px 0; border:1px solid var(--line); border-radius:6px; overflow:hidden; } summary { display:flex; align-items:center; gap:9px; padding:12px 14px; cursor:pointer; font-weight:700; background:#fbfdfd; } summary:hover { background:#f1f8f8; }
+    .turn-body { padding:4px 16px 18px; } section { margin-top:16px; padding:12px 14px; border-left:3px solid #adbfc0; background:#fafcfc; } section h3 { margin:0 0 8px; font-size:13px; } section.progress { border-left-color:#41a598; background:var(--progress); } section.result { border-left-color:#7d83cc; background:var(--result); }
+    .markdown { overflow-wrap:anywhere; } .markdown p { margin:0 0 10px; white-space:pre-wrap; } .markdown p:last-child { margin-bottom:0; } .markdown code { padding:1px 4px; border-radius:3px; background:#e8eded; font:12px ui-monospace, SFMono-Regular, Consolas, monospace; } .markdown pre { margin:8px 0; padding:12px; overflow:auto; background:#172126; color:#e6f1f1; border-radius:4px; } .markdown pre code { padding:0; background:transparent; color:inherit; }
+    @media (max-width:760px) { header { padding:10px 14px; } header h1 { font-size:14px; } .layout { display:block; } aside { display:none; } main { padding:22px 16px 48px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>OpenCode Session Log</h1>
+    <button id="open" type="button">导入记录</button>
+    <button id="refresh" type="button" disabled>刷新</button>
+    <button id="auto" type="button" disabled aria-pressed="false">自动刷新：关</button>
+    <input id="file-input" type="file" accept=".md,.markdown,text/markdown" hidden>
+  </header>
+  <div class="layout">
+    <aside><h2>目录</h2><nav id="toc"><span>尚未导入记录</span></nav></aside>
+    <main>
+      <div id="empty"><strong>导入一个会话记录</strong>选择 `session_log/` 中的 Markdown 文件。通过“导入记录”选择文件后，可启用自动刷新以查看正在写入的会话进度。</div>
+      <article id="record" hidden></article>
+    </main>
+  </div>
+  <script>
+    const openButton = document.querySelector('#open');
+    const refreshButton = document.querySelector('#refresh');
+    const autoButton = document.querySelector('#auto');
+    const input = document.querySelector('#file-input');
+    const record = document.querySelector('#record');
+    const empty = document.querySelector('#empty');
+    const toc = document.querySelector('#toc');
+    let handle = null, fallbackFile = null, autoRefresh = false, timer = null;
+
+    openButton.addEventListener('click', openFile);
+    refreshButton.addEventListener('click', loadFile);
+    autoButton.addEventListener('click', toggleAutoRefresh);
+    input.addEventListener('change', () => { fallbackFile = input.files[0] || null; loadFile(); });
+
+    async function openFile() {
+      if ('showOpenFilePicker' in window) {
+        try { [handle] = await window.showOpenFilePicker({ types: [{ description: 'Markdown records', accept: { 'text/markdown': ['.md', '.markdown'] } }] }); fallbackFile = null; await loadFile(); return; } catch (error) { if (error.name === 'AbortError') return; }
+      }
+      input.click();
+    }
+
+    async function loadFile() {
+      try {
+        const file = handle ? await handle.getFile() : fallbackFile;
+        if (!file) return;
+        render(await file.text(), file.name);
+        refreshButton.disabled = false;
+        autoButton.disabled = !handle;
+        if (!handle) autoRefresh = false;
+        updateAutoButton();
+      } catch (error) { console.error(error); }
+    }
+
+    function toggleAutoRefresh() {
+      if (!handle) return;
+      autoRefresh = !autoRefresh;
+      updateAutoButton();
+      clearInterval(timer);
+      timer = autoRefresh ? setInterval(loadFile, 1000) : null;
+    }
+
+    function updateAutoButton() { autoButton.setAttribute('aria-pressed', String(autoRefresh)); autoButton.textContent = `自动刷新：${autoRefresh ? '开' : '关'}`; }
+
+    function render(source, name) {
+      const { meta, body } = splitFrontmatter(source);
+      const turns = parseTurns(body);
+      empty.hidden = true; record.hidden = false;
+      record.replaceChildren();
+      const header = document.createElement('div'); header.className = 'meta';
+      header.innerHTML = `<h2>${escapeHtml(name)}</h2><span class="badge">${escapeHtml(meta.session_id || 'unknown session')}</span><span>${escapeHtml(meta.updated_at || '')}</span>`;
+      record.append(header);
+      const items = [];
+      turns.forEach((turn, index) => {
+        const id = `turn-${index + 1}`; const details = document.createElement('details'); details.id = id; details.open = index === turns.length - 1;
+        details.innerHTML = `<summary>Turn ${index + 1}${turn.user ? ` <span class="badge">${escapeHtml(truncate(turn.user, 42))}</span>` : ''}</summary><div class="turn-body"></div>`;
+        const body = details.querySelector('.turn-body');
+        appendSection(body, 'User', turn.user, 'user'); appendSection(body, 'Agent Progress', turn.progress, 'progress'); appendSection(body, 'Agent Result', turn.result, 'result'); appendSection(body, 'Tool Calls', turn.tools, 'tools');
+        record.append(details); items.push({ id, label: `Turn ${index + 1}` });
+      });
+      toc.replaceChildren(...items.map(({ id, label }) => { const li = document.createElement('li'); li.innerHTML = `<a href="#${id}">${label}</a>`; return li; }));
+    }
+
+    function splitFrontmatter(source) { const match = source.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/); const meta = {}; if (match) match[1].split('\n').forEach(line => { const index = line.indexOf(':'); if (index > 0) meta[line.slice(0, index).trim()] = line.slice(index + 1).trim(); }); return { meta, body: source.slice(match ? match[0].length : 0) }; }
+    function parseTurns(body) { const sections = body.split(/^## Turn \d+\s*$/m).slice(1); return sections.map(section => ({ user: sectionValue(section, 'User'), progress: sectionValue(section, 'Agent Progress'), result: sectionValue(section, 'Agent Result'), tools: sectionValue(section, 'Tool Calls') })); }
+    function sectionValue(turn, name) { const match = turn.match(new RegExp(`^### ${name}\\s*\\n([\\s\\S]*?)(?=^### |$)`, 'm')); return match ? match[1].trim() : ''; }
+    function appendSection(parent, title, value, className) { if (!value) return; const section = document.createElement('section'); section.className = className; section.innerHTML = `<h3>${title}</h3><div class="markdown">${renderMarkdown(value)}</div>`; parent.append(section); }
+    function renderMarkdown(value) { const blocks = value.split(/```/); return blocks.map((block, index) => index % 2 ? `<pre><code>${escapeHtml(block.trim())}</code></pre>` : block.split(/\n\n+/).filter(Boolean).map(paragraph => `<p>${inlineMarkdown(paragraph)}</p>`).join('')).join(''); }
+    function inlineMarkdown(value) { return escapeHtml(value).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>'); }
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[character]); }
+    function truncate(value, limit) { return value.length > limit ? `${value.slice(0, limit)}...` : value; }
+  </script>
+</body>
+</html>
