@@ -1,6 +1,6 @@
 ---
 name: paper-deep-review
-description: Rigorous academic paper and technical-report review workflow. Use when Codex is asked to deeply read, analyze, summarize, or structure one paper, arXiv article, OpenReview submission, PDF, LaTeX source, technical whitepaper, or model/system report, including isolated per-paper sub-agent tasks; produce an auditable Markdown review with classified execution checks, original figures, formulas, evidence chains, related-work comparison, OpenReview public-review analysis when available, infrastructure analysis including data types, bandwidth utilization, and CPU/GPU/NPU heterogeneity, and optional source-code cross-checks.
+description: Rigorous academic paper and technical-report review workflow for one paper, arXiv article, OpenReview submission, PDF, LaTeX source, whitepaper, or model/system report. Produce auditable Markdown with classified checks, original figures, formulas, evidence chains, related-work and public-review analysis, infrastructure and source-code cross-checks, isolated-agent provenance, and optional promotion into a governed project knowledge base through $research-knowledge-publisher.
 ---
 
 # Paper Deep Review
@@ -8,6 +8,16 @@ description: Rigorous academic paper and technical-report review workflow. Use w
 ## Overview
 
 Use this skill to turn a paper or technical report into a rigorous Markdown review grounded in the source document, figures/tables, related work, system implications, and implementation code when available.
+
+## Project Knowledge Base Integration
+
+When `$research-knowledge-publisher` is available or a repository research-knowledge profile can be resolved, read [references/knowledge-base-integration.md](references/knowledge-base-integration.md) before creating the paper folder.
+
+- Resolve the organization and use its process root for PDF, source, render, crop, code, QA, checklist, manifest, handoff, and working `analysis.md` artifacts.
+- Treat the review delivery and canonical Paper as separate lifecycle objects. Freeze and validate the review before formal promotion.
+- In standalone mode, promote through `$research-knowledge-publisher` only after review validation.
+- In delegated mode, do not edit Survey/global/formal knowledge; record promotion recommendations in the handoff for the parent agent.
+- Keep original-paper formal assets under one canonical Paper owner and keep render/crop process files under the process root.
 
 ## Mandatory Execution Contract
 
@@ -26,7 +36,7 @@ Treat this skill as a required workflow rather than optional guidance.
 
 ## Workflow
 
-1. **Create or reuse a paper folder.** Use `<paper-id>_<short-title>` when no folder exists; reuse the user-provided folder for offline papers. Keep materials under that folder:
+1. **Create or reuse a paper folder.** Use `<paper-id>_<short-title>` when no folder exists; reuse the user-provided folder for offline papers. Under a resolved knowledge organization, treat this as a process workspace rather than the canonical Paper path. Keep materials under that folder:
    - `paper.pdf` or original PDF name
    - `task_packet.yaml` when supplied by a parent agent
    - `source/` for LaTeX/source archives when available
@@ -166,6 +176,8 @@ After Workflow step 11, use this freeze protocol:
 
 Keep the handoff compact: record status, dispatch/task-packet/skill-tree/contract provenance, artifact paths, synthesis claims with evidence locations, and blocked/skipped items; do not include hidden chain-of-thought. Normalize task-packet literal `unknown` values to JSON `null` in `deliverable_manifest.json` and preserve the reason in the corresponding absent/blocked artifact entry.
 
+When knowledge-base integration applies, execute the publication protocol only after the review freeze. Do not modify frozen review artifacts to make canonical links convenient; create a formal Paper projection with owned formal assets and traceable source references.
+
 ## Quality Checks
 
 Before finishing:
@@ -188,6 +200,7 @@ Before finishing:
 - Confirm gain-attribution statements are supported by matched ablations or explicitly marked as rough/inferred decompositions.
 - Confirm checkpoint/config claims are grounded in inspected metadata or clearly marked as unverified.
 - In delegated runs, confirm `agent_handoff.md` follows the supplied schema, every synthesis claim points to exact evidence, and `artifact_manifest.sha256` covers all files except itself. Report any suspected out-of-folder edit to the parent; do not self-certify filesystem read isolation.
+- When a knowledge organization is resolved, confirm process/formal separation, canonical Paper and Asset ownership, promotion responsibility (`standalone` reviewer or delegated parent), and publisher validation status are explicitly classified.
 - If tests or extraction tools could not run, state that limitation in the final response.
 
 ## Resources
@@ -198,3 +211,5 @@ Before finishing:
 - `scripts/extract_pdf_assets.py`: optional helper to extract PDF text and render page PNGs for offline papers.
 - `scripts/crop_pdf_figures.py`: optional helper to batch crop figures/tables from page PNGs and create a contact sheet for QA.
 - `$openrouter-icu-image`: optional post-processing skill for generating a high-quality flat technical analysis diagram from the completed `analysis.md`.
+- `references/knowledge-base-integration.md`: conditional review-to-canonical-Paper publication contract.
+- `$research-knowledge-publisher`: project skill for organization resolution, canonical ownership, promotion planning, link/asset validation, and process/formal separation.

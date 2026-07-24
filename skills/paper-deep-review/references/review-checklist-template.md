@@ -28,6 +28,10 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 - [pending] D1 Delegated handoff: after W11, write the preliminary contract-compliant `agent_handoff.md`, or mark standalone invocation with reason; freeze it before final deliverable hashing.
 - [pending] D2 Deliverable manifest: validate a preliminary `deliverable_manifest.json`, including revision history/current revision identity; finalize/freeze checklist and handoff, recompute hashes, then pass final structural and semantic validation with no errors.
 - [pending] D3 Artifact manifest: in delegated runs, preflight-generate/verify `artifact_manifest.sha256` before the freeze, then regenerate/verify it last after the final deliverable manifest; do not edit covered files afterward. Mark standalone invocation with reason.
+- [pending] K1 Organization: resolve `$research-knowledge-publisher` organization/profile/governance and canonical owner, or classify knowledge-base integration as not applicable.
+- [pending] K2 Process/formal boundary: keep PDF/source/render/crop/code/QA/review artifacts under the process root and identify only stable Paper/Asset promotion candidates.
+- [pending] K3 Promotion responsibility: standalone runs validate the post-freeze promotion plan; delegated runs record promotion recommendations without editing parent/global/formal paths.
+- [pending] K4 Publication validation: record publisher validation status/path after promotion, or classify parent-owned/not-applicable responsibility precisely.
 
 ## Quality Checks
 
@@ -47,6 +51,7 @@ Allowed statuses: `pending`, `done`, `blocked`, `skipped-with-reason`. Replace e
 - [pending] Q14 `deliverable_manifest.json` passes structural and semantic validation and agrees with the centralized terminology/symbol chapter, key-term/symbol coverage, artifact hashes, visual counts/missing types, evidence status, invocation mode/provenance, frozen checklist/handoff, and limitations.
 - [pending] Q15 Every core design has a rationale entry with source status, concrete target problem, causal mechanism, trade-off, and evidence judgment; inference is never presented as author-stated intent.
 - [pending] Q16 Revision metadata matches `analysis.md` and the manifest; history has one valid initial/migration bootstrap, is ordered and append-only, keeps unresolved issue IDs blocked until exactly one later migration-resolution, makes every later tracked entry point to the exact superseded revision/manifest hash, and identifies the latest frozen state.
+- [pending] Q17 Knowledge integration, when applicable, preserves canonical Paper/Asset ownership, required inbound/backlinks, process-root isolation, and separate review/publication validation states.
 
 ## Final Classification
 
