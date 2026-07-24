@@ -1,4 +1,4 @@
 interface:
   display_name: "AI Algorithm Survey"
-  short_description: "Orchestrate isolated agents for evidence-based surveys"
-  default_prompt: "Use $ai-algorithm-survey with isolated $paper-deep-review agents to produce a revision-tracked, schema-valid survey with normalized terminology, paper-specific meanings, design rationale, and evidence."
+  short_description: "Survey methods and system adoption into governed knowledge"
+  default_prompt: "Use $ai-algorithm-survey to research methods and system adoption, run isolated $paper-deep-review agents where required, and publish validated canonical knowledge when a project organization profile is available."

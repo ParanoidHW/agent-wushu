@@ -1,6 +1,6 @@
 ---
 name: ai-algorithm-survey
-description: Search, select, deep-review, and synthesize papers for a specific AI algorithm field. Use when the user provides an AI algorithm/topic/domain and wants literature discovery through search engines, arXiv, GitHub/awesome paper lists, and top AI conferences or journals such as CVPR, ICML, ICLR, NeurIPS, AAAI, TPAMI, TIP, IROS, ICRA, RA-L, with paper affiliations, repository popularity, citation/cross-reference frequency, original-paper figure evidence, implementation details, and high-value paper signals recorded; orchestrate one isolated $paper-deep-review sub-agent per selected paper, then produce a cross-paper lineage, relationship, trend summary, or presentation.
+description: Search, select, deep-review, and synthesize research for an AI algorithm, model-system, infrastructure, or adoption field. Use for method-first paper discovery, system-first technical-report/model-card/code discovery, top-venue and organization trends, implementation adoption, isolated $paper-deep-review agents, cross-work synthesis, presentations, and publication into a governed project knowledge base through $research-knowledge-publisher when available.
 ---
 
 # AI Algorithm Survey
@@ -10,6 +10,16 @@ description: Search, select, deep-review, and synthesize papers for a specific A
 Use this skill to turn a user-specified AI algorithm field into a traceable literature survey: search broadly, select the most relevant papers, delegate each selected paper to an isolated sub-agent running `$paper-deep-review`, validate its artifacts, then synthesize the technical lineage and evolution trend across the works.
 
 Default output language is Chinese unless the user asks otherwise. Keep paper titles, method names, datasets, formulas, and code identifiers in their original language when that preserves precision.
+
+## Project Knowledge Base Integration
+
+When `$research-knowledge-publisher` is available or the repository contains a research-knowledge profile, read [references/knowledge-base-integration.md](references/knowledge-base-integration.md) and follow it as an additional publication contract.
+
+- Resolve the publisher's skill-owned organization before creating the survey workspace.
+- Keep search, PDF, source, render, review, code, QA, and manifest work under the resolved process root.
+- Maintain canonical ownership and incremental change records before editing formal knowledge.
+- Validate the survey deliverable and knowledge-base publication independently.
+- Repository profiles and scoped governance bind or tighten the portable organization; do not hardcode repository paths in this skill.
 
 ## Mandatory Execution Contract
 
@@ -121,6 +131,12 @@ Extract or ask for only the missing high-impact constraints:
 - domain boundaries, such as CV, NLP, robotics, generative models, optimization, systems, or multimodal learning,
 - whether to include surveys, benchmarks, code repositories, or only peer-reviewed papers.
 
+Choose and record a survey mode:
+
+- `method`: method papers and technical lineage;
+- `system-adoption`: model systems, technical reports, model cards, official code, backends, and integrations;
+- `hybrid`: both lanes with separate count buckets; default for AI infrastructure and model-system trends.
+
 Normalize the field into a compact slug, then create the output folder before searching.
 
 Immediately after creating the folder, write the initial `execution_checklist.md` with all workflow and Quality Check items. This checklist is part of the required output.
@@ -143,6 +159,16 @@ Cover at least four source categories when possible:
 - GitHub repositories and `awesome-*` paper lists for actively maintained subfield collections,
 - arXiv queries and arXiv IDs for preprints/source material,
 - venue/proceedings queries for peer-reviewed versions.
+
+For `system-adoption` and `hybrid`, also run an entity-first lane:
+
+- inventory relevant organizations, model families, technical reports, model cards, official repositories, configs, kernels, and dependencies;
+- search PDF/README/model-card/config/code full text rather than titles alone;
+- expand functional terms such as efficient inference, long context/video, high resolution, memory efficiency, and scalable serving into mechanism and implementation terms;
+- reverse-search kernel/runtime repositories for adopters and integrations;
+- classify each hit as `primary-contribution`, `native-system-component`, `optional-official-backend`, `third-party-integration`, or `mention-only`.
+
+Do not add system-adoption records to peer-reviewed paper counts. Keep technical-report, native adoption, optional backend, and third-party integration totals separate.
 
 Use venue-focused patterns such as:
 
@@ -232,6 +258,8 @@ Deduplicate arXiv, OpenReview, proceedings, and journal entries. Prefer the peer
 
 Record paper-level affiliations/organizations for every candidate when available. Extract them from the paper PDF author block, arXiv metadata, OpenReview page, proceedings page, project page, or official code README. Do not infer affiliations from author names alone. If affiliations are unavailable or ambiguous, use an empty list and set `affiliation_evidence` to `unknown` or a precise caveat.
 
+For `system-adoption` and `hybrid`, also write `system_db.jsonl`. Use stable entity IDs across reports, model cards, repositories, checkpoints, and integrations. Record canonical organization, model/system identity, technology role, evidence level, official source locators, implementation identifiers, and links to related paper records. A model, paper, repository, and integration are related records, not interchangeable count units.
+
 ### 5. Select Papers for Deep Review
 
 Default selection is 6 papers. Adjust only when the user asks for a different scope or the field genuinely needs a smaller/larger set.
@@ -265,6 +293,8 @@ Write `selection.md` with:
 ### 6. Deep-Review Each Selected Paper
 
 For every selected paper, delegate a single-paper task under `references/paper-review-agent-contract.md`. The paper agent must use `$paper-deep-review` and follow its complete workflow. Do not replace the deep review with a short abstract summary or perform the batch inside the parent context.
+
+The one-paper-per-agent contract applies to selected method papers and technical reports chosen for mechanism-level analysis. Adoption-only code/config/backend records do not require a paper review unless they are promoted into the selected deep-review set; they still require source and implementation evidence in the parent survey database.
 
 Before dispatch:
 
@@ -317,6 +347,8 @@ Include:
 - soft/hardware infrastructure evolution, including data types, bandwidth utilization, CPU/GPU/NPU heterogeneity, kernels/operators, memory, interconnect, serving, and deployment constraints,
 - trend summary: what is converging, what remains unsettled, and where the next likely research directions are,
 - caveats about evidence quality, venue status, and whether claims come from paper text, code inspection, or your own inference.
+
+For `system-adoption` and `hybrid`, separately report peer-reviewed method-paper counts, technical-report counts, native-system adoption, optional official backends, and third-party integrations. Connect them through stable identities and evidence-classified relations; never collapse them into one publication total.
 
 For each core paper, include a compact subsection that introduces the problem, explains each core design's author-stated or inferred rationale, names the concrete problem it targets, traces why the mechanism could solve it, compares alternatives/trade-offs, walks through the accepted original mechanism visual and implementation path, cites the result/ablation/system evidence, and states the limitation. For a visual type accepted as missing under the agent verdict table, show the recorded alternative evidence and limitation instead of inventing or substituting a generated visual. Cross-paper tables and conclusions do not replace these per-paper explanations.
 
@@ -375,6 +407,8 @@ Before finishing:
 - Confirm survey `semantic_validation` passed with empty errors for artifact hashes, revision-section/history/latest-ID consistency, paper revision identity reconciliation, selected-paper count, paper and runtime-agent identity uniqueness, paper-manifest/dispatch reconciliation, per-design rationale equality/core-design coverage, visual aggregation, and frozen-checklist consistency.
 - Confirm `search_log.md`, `github_sources.md`, `impact_signals.md`, `paper_db.jsonl`, `selection.md`, `agent_dispatch_log.md`, `figure_inventory.md`, each selected paper `analysis.md`, and `synthesis.md` exist; require `figures/contact-sheet.png` when accepted crops exist, otherwise require precise survey-level no-crop evidence.
 - Confirm search covered general search, GitHub/awesome repositories, arXiv, and relevant top venues/journals when available.
+- For `system-adoption` or `hybrid`, confirm entity-first discovery covered official reports/model cards/repositories/configs, full-text mechanism and implementation terms, and reverse kernel/runtime adopters.
+- Confirm paper, technical-report, native-adoption, optional-backend, and third-party-integration count buckets remain separate.
 - Confirm candidate papers record `affiliations` and `affiliation_evidence`, using explicit caveats where affiliations are unavailable.
 - Confirm candidate papers record impact signals: repo metrics, citation metrics, cross-reference count/evidence, and awesome-list frequency where available.
 - Confirm every selected paper has a clear role in the evolution narrative.
@@ -407,3 +441,5 @@ Before finishing:
 - `$paper-deep-review`: required per-paper workflow and source for original-paper figures, formulas, implementation evidence, and limitations.
 - `$pptx` or another applicable presentation skill: required when the user requests an editable presentation deliverable.
 - `$openrouter-icu-image`: optional post-processing skill for generating a shallow-gold flat technical infographic from `synthesis.md`.
+- `references/knowledge-base-integration.md`: conditional process/promotion contract when a governed research knowledge base is available.
+- `$research-knowledge-publisher`: project publication skill for organization resolution, canonical ownership, promotion plans, links, assets, and knowledge-base validation.
