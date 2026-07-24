@@ -61,7 +61,7 @@ python wushu.py status
 
 `registry.yaml` 当前注册 **8 Skills + 1 Tool + 1 CLI + 4 Plugins**，用于按类别、标签或模块名同步外部资源。
 
-当前工作区还包含本地维护的增强模块：`openrouter-icu-image`、`paper-deep-review`、`ai-algorithm-survey`、`research-paper-to-ppt`、`skill_converter.py` 和 `interaction_record`。
+当前工作区还包含本地维护的增强模块：`openrouter-icu-image`、`paper-deep-review`、`ai-algorithm-survey`、`research-knowledge-publisher`、`research-paper-to-ppt`、`skill_converter.py` 和 `interaction_record`。
 
 👉 **详细说明请查看**: [已集成模块文档](./docs/INTEGRATED_MODULES.md)
 
@@ -71,7 +71,7 @@ python wushu.py status
 | Registry Tools | 1 | [查看详情](./docs/INTEGRATED_MODULES.md#tools) |
 | Registry CLIs | 1 | [`registry.yaml`](./registry.yaml) |
 | Registry Plugins | 4 | [查看详情](./docs/INTEGRATED_MODULES.md#plugins) |
-| Local Enhancements | 6 | 见下方“本地增强能力” |
+| Local Enhancements | 7 | 见下方“本地增强能力” |
 
 ### 快速概览
 
@@ -84,6 +84,7 @@ python wushu.py status
 - [Research Paper to PPT](./skills/research-paper-to-ppt/) - 论文分析报告和可编辑 PPTX 生成流程
 - [Paper Deep Review](./skills/paper-deep-review/) - 严格论文/技术报告深度审阅、技术点消融证据、OpenReview 评审交叉核验和可选 AI 分析示意图
 - [AI Algorithm Survey](./skills/ai-algorithm-survey/) - 面向特定 AI 算法领域的论文/GitHub awesome 检索、机构归属和热度价值信号记录、逐篇深度分析、趋势/infra 综合和可选 AI 示意图
+- [Research Knowledge Publisher](./skills/research-knowledge-publisher/) - 将调研、论文审阅和证据索引按组织架构发布到可验证的研究知识库
 - [OpenRouter ICU Image](./skills/openrouter-icu-image/) - OpenRouter ICU 图像生成/编辑、文件输入和多候选图生成
 - `cli-anything-skill` / `awesome-agent-skills` - 已在 `registry.yaml` 注册，可按需同步
 
@@ -100,6 +101,9 @@ python wushu.py status
 ### OpenRouter ICU Image
 
 [`skills/openrouter-icu-image`](./skills/openrouter-icu-image/) 提供一个无第三方 Python 依赖的同步 CLI，用于调用 OpenRouter ICU 的 OpenAI-compatible 图像接口。
+
+<details>
+<summary>查看核心能力与使用示例</summary>
 
 核心能力：
 
@@ -135,9 +139,14 @@ python3 scripts/openrouter_icu_image.py responses-doc \
   --output output/openrouter-icu/report.png
 ```
 
+</details>
+
 ### Interaction Record
 
 [`tools/interaction_record`](./tools/interaction_record/) 用于保存和查看主题相关的用户-Agent 交互历史。
+
+<details>
+<summary>查看记录格式、查看器特性与使用示例</summary>
 
 包含：
 
@@ -172,15 +181,23 @@ python3 -m http.server 8000
 # 浏览器访问 http://localhost:8000/tools/interaction_record/interaction-viewer.html
 ```
 
-### AI Algorithm Survey / Paper Review / Paper to PPT
+</details>
 
-本仓库维护了三个论文相关本地 skill：
+### AI Algorithm Survey / Paper Review / Knowledge Publishing / Paper to PPT
 
-- [`skills/ai-algorithm-survey`](./skills/ai-algorithm-survey/)：输入特定 AI 算法领域后，通过搜索引擎、GitHub/awesome 论文列表、arXiv 和 CVPR、ICML、ICLR、NeurIPS、AAAI、TPAMI、TIP、IROS、ICRA、RA-L 等顶会顶刊检索候选论文，记录论文归属组织/高校、代码仓库热度、引用数、候选论文间交叉引用频率等信号，识别高热度高价值论文，筛选代表性工作，并调用 `paper-deep-review` 逐篇分析后汇总技术谱系、演进趋势和软硬件 infra 需求维度，包括 data types、高效带宽利用、CPU/GPU/NPU 异构等；如果 `openrouter-icu-image` 可用，会基于最终 Markdown 生成浅金色扁平化趋势/infra 示意图并插入文档。
-- [`skills/paper-deep-review`](./skills/paper-deep-review/)：面向论文、技术报告、PDF/LaTeX/source code 的严格深度审阅流程，强调公式、图表、代码和证据链；会逐项核对论文声称的技术点是否有消融实验、受控对照或机制证据支撑，并分析 data types、高效带宽利用、CPU/GPU/NPU 异构等 infra 影响；如果论文有公开 OpenReview 页面，会结合论文正文、appendix、rebuttal、实验和代码对评审意见进行交叉核验，而不是只罗列 reviewer comments；如果 `openrouter-icu-image` 可用，会基于最终 Markdown 生成浅金色扁平化算法分析示意图并插入文档。
+本仓库维护了四个相互衔接的论文研究本地 skill：
+
+<details>
+<summary>查看各 skill 的完整工作流与知识库发布规则</summary>
+
+- [`skills/ai-algorithm-survey`](./skills/ai-algorithm-survey/)：输入特定 AI 算法领域后，通过搜索引擎、GitHub/awesome 论文列表、arXiv 和 CVPR、ICML、ICLR、NeurIPS、AAAI、TPAMI、TIP、IROS、ICRA、RA-L 等顶会顶刊检索候选论文，记录论文归属组织/高校、代码仓库热度、引用数、候选论文间交叉引用频率等信号，识别高热度高价值论文，筛选代表性工作，并调用 `paper-deep-review` 逐篇分析后汇总技术谱系、演进趋势和软硬件 infra 需求维度，包括 data types、高效带宽利用、CPU/GPU/NPU 异构等。启用知识库发布流程时，会先规划稳定知识的归属和变更集，再把跨论文综合、单篇分析、主题和证据分别发布到对应的规范位置。
+- [`skills/paper-deep-review`](./skills/paper-deep-review/)：面向论文、技术报告、PDF/LaTeX/source code 的严格深度审阅流程，强调公式、图表、代码和证据链；会逐项核对论文声称的技术点是否有消融实验、受控对照或机制证据支撑，并分析 data types、高效带宽利用、CPU/GPU/NPU 异构等 infra 影响；如果论文有公开 OpenReview 页面，会结合论文正文、appendix、rebuttal、实验和代码对评审意见进行交叉核验，而不是只罗列 reviewer comments。启用知识库发布流程时，审阅工作区仍保留 PDF、裁图、日志等过程材料，只有稳定的 Paper 投影和通过质量检查的资产进入正式知识库。
+- [`skills/research-knowledge-publisher`](./skills/research-knowledge-publisher/)：负责将调研、审阅、综合、证据索引和资产发布到由组织架构和可选仓库 profile 约束的研究知识库。它在正式编辑前生成并校验发布计划，确定域、文档类型、稳定 slug 和唯一归属；发布后要求建立 `README -> Survey -> Paper -> Asset` 的双向链接，并校验链接、归属、资产、过程路径引用和孤立内容。
 - [`skills/research-paper-to-ppt`](./skills/research-paper-to-ppt/)：将论文分析结果组织为报告和可编辑 PPTX 的工作流。
 
-`paper-deep-review` 包含 PDF 文本/图片提取、图表裁剪和 Markdown 模板资源，适合离线 PDF 和带代码仓库的论文复核。
+`paper-deep-review` 包含 PDF 文本/图片提取、图表裁剪和 Markdown 模板资源，适合离线 PDF 和带代码仓库的论文复核。三个研究 skill 可各自完成研究与审阅；需要沉淀正式知识时，由 `research-knowledge-publisher` 独立验证发布状态，避免把过程工作区当作知识库内容。
+
+</details>
 
 ### Skill Converter
 
